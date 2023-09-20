@@ -18,9 +18,26 @@ Testcontainers for NebulaGraph
 
 ## Dependency
 
-Support Scala 3, Scala 2.13 and Scala 2.12:
+Support Scala 3, Scala 2.13 and Scala 2.12
+
+**sbt**:
 ```scala
-libraryDependencies += "io.github.jxnu-liguobin" %% "testcontainers-nebula" % <latest version>
+"io.github.jxnu-liguobin" %% "testcontainers-nebula" % <latest version>
+```
+
+**maven**:
+```
+<dependency>
+    <groupId>io.github.jxnu-liguobin</groupId>
+    <artifactId>testcontainers-nebula_2.13</artifactId>
+    <version>'latest version'</version>
+    <scope>test</scope>
+</dependency>
+```
+
+**gradle**:
+```
+testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebula_2.13', version: 'latest version'
 ```
 
 ## Usage Instructions
@@ -30,3 +47,12 @@ These containers were starting:
 - metad
 - storaged
 - console
+
+Java example: [SimpleNebulaClusterTest](./examples/src/main/java/testcontainers/containers/SimpleNebulaClusterTest.java)
+
+ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/zio/NebulaSpec.scala)
+
+The zio module provides default configurations for better integration with zio-nebula, just adding dependency:
+```scala
+"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % <latest version>
+```

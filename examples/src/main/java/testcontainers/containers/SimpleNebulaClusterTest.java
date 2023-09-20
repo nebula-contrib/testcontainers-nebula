@@ -34,7 +34,7 @@ public class SimpleNebulaClusterTest  {
 
         int instanceIndex = 1;
 
-        prepare();
+        useClientToCreateSpaceTag();
 
         assert (meta.getContainerName().startsWith(Nebula.MetadName() + instanceIndex));
         assert (storage.getContainerName().startsWith(Nebula.StoragedName() + instanceIndex));
@@ -52,7 +52,7 @@ public class SimpleNebulaClusterTest  {
         
     }
 
-    private static void prepare() {
+    private static void useClientToCreateSpaceTag() {
         NebulaPool pool = new NebulaPool();
         Session session;
         NebulaPoolConfig nebulaPoolConfig = new NebulaPoolConfig();

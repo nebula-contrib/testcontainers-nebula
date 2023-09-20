@@ -2,6 +2,11 @@ val zioVersion       = "2.0.13"
 val scala3_Version   = "3.3.1"
 val scala2_13Version = "2.13.12"
 val scala2_12Version = "2.12.18"
+val testcontainersVersion = "1.19.0"
+val scalaCollectionCompatVersion = "2.11.0"
+val logbackVersion = "1.4.2"
+val nebulaJavaClientVersion = "3.6.0"
+val zioNebulaVersion = "0.1.0"
 
 val supportCrossVersionList = Seq(scala3_Version, scala2_13Version, scala2_12Version)
 
@@ -38,13 +43,9 @@ lazy val core = project
     name                     := "testcontainers-nebula",
     crossScalaVersions       := supportCrossVersionList,
     libraryDependencies ++= Seq(
-      "org.testcontainers"      % "testcontainers"          % "1.19.0",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.11.0",
-      "ch.qos.logback"          % "logback-classic"         % "1.4.2"  % Test,
-      "com.vesoft"              % "client"                  % "3.6.0"  % Test,
-      "org.scalatest"          %% "scalatest"               % "3.2.17" % Test
-    ),
-    Test / parallelExecution := false
+      "org.testcontainers"      % "testcontainers"          % testcontainersVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+    )
   )
 
 lazy val zio = project
@@ -53,7 +54,8 @@ lazy val zio = project
     name                     := "testcontainers-nebula-zio",
     crossScalaVersions       := supportCrossVersionList,
     libraryDependencies ++= Seq(
-      "io.github.jxnu-liguobin" %% "zio-nebula" % "0.1.0" % Provided
+      "ch.qos.logback"          % "logback-classic"         % logbackVersion  % Test,
+      "io.github.jxnu-liguobin" %% "zio-nebula" % zioNebulaVersion % Provided
     ) ++ _zioTests.map(_ % Test),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     Test / parallelExecution := false
@@ -67,7 +69,7 @@ lazy val examples = project
     crossScalaVersions       := Nil,
     scalaVersion             := scala2_13Version,
     libraryDependencies ++= Seq(
-      "com.vesoft" % "client" % "3.6.0"
+      "com.vesoft" % "client" % nebulaJavaClientVersion
     ),
     Test / parallelExecution := false
   )
