@@ -1,12 +1,12 @@
-val zioVersion       = "2.0.13"
-val scala3_Version   = "3.3.1"
-val scala2_13Version = "2.13.12"
-val scala2_12Version = "2.12.18"
-val testcontainersVersion = "1.19.0"
+val zioVersion                   = "2.0.13"
+val scala3_Version               = "3.3.1"
+val scala2_13Version             = "2.13.12"
+val scala2_12Version             = "2.12.18"
+val testcontainersVersion        = "1.19.0"
 val scalaCollectionCompatVersion = "2.11.0"
-val logbackVersion = "1.4.2"
-val nebulaJavaClientVersion = "3.6.0"
-val zioNebulaVersion = "0.1.0"
+val logbackVersion               = "1.4.2"
+val nebulaJavaClientVersion      = "3.6.0"
+val zioNebulaVersion             = "0.1.0"
 
 val supportCrossVersionList = Seq(scala3_Version, scala2_13Version, scala2_12Version)
 
@@ -40,11 +40,11 @@ val _zioTests = Seq(
 lazy val core = project
   .in(file("core"))
   .settings(
-    name                     := "testcontainers-nebula",
-    crossScalaVersions       := supportCrossVersionList,
+    name               := "testcontainers-nebula",
+    crossScalaVersions := supportCrossVersionList,
     libraryDependencies ++= Seq(
       "org.testcontainers"      % "testcontainers"          % testcontainersVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
     )
   )
 
@@ -54,8 +54,8 @@ lazy val zio = project
     name                     := "testcontainers-nebula-zio",
     crossScalaVersions       := supportCrossVersionList,
     libraryDependencies ++= Seq(
-      "ch.qos.logback"          % "logback-classic"         % logbackVersion  % Test,
-      "io.github.jxnu-liguobin" %% "zio-nebula" % zioNebulaVersion % Provided
+      "ch.qos.logback"           % "logback-classic" % logbackVersion   % Test,
+      "io.github.jxnu-liguobin" %% "zio-nebula"      % zioNebulaVersion % Provided
     ) ++ _zioTests.map(_ % Test),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     Test / parallelExecution := false
