@@ -98,11 +98,11 @@ abstract class NebulaClusterContainer extends Startable {
   final def storagedUrl: List[String] =
     storaged.map(sd => String.format("http://" + sd.getHost + ":" + sd.getMappedPort(Nebula.StoragedExposedPort)))
 
-  final def graphdPort: List[Int] = graphd.map(_.getMappedPort(Nebula.GraphdExposedPort))
+  final def graphdPort: List[Int] = graphd.map(_.getMappedPort(Nebula.GraphdExposedPort).intValue())
 
-  final def metadPort: List[Int] = metad.map(_.getMappedPort(Nebula.MetadExposedPort))
+  final def metadPort: List[Int] = metad.map(_.getMappedPort(Nebula.MetadExposedPort).intValue())
 
-  final def storagedPort: List[Int] = storaged.map(_.getMappedPort(Nebula.StoragedExposedPort))
+  final def storagedPort: List[Int] = storaged.map(_.getMappedPort(Nebula.StoragedExposedPort).intValue())
 
   final def graphdPortJava: List[Integer] = graphdPort.map(Integer.valueOf)
 
