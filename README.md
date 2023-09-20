@@ -18,7 +18,7 @@ Testcontainers for NebulaGraph
 
 ## Dependency
 
-Support Scala 3, Scala 2.13 and Scala 2.12
+Support Java 8+, Scala 3, Scala 2.13 and Scala 2.12
 
 **sbt**:
 ```scala
@@ -26,7 +26,7 @@ Support Scala 3, Scala 2.13 and Scala 2.12
 ```
 
 **maven**:
-```
+```xml
 <dependency>
     <groupId>io.github.jxnu-liguobin</groupId>
     <artifactId>testcontainers-nebula_2.13</artifactId>
@@ -36,7 +36,7 @@ Support Scala 3, Scala 2.13 and Scala 2.12
 ```
 
 **gradle**:
-```
+```groovy
 testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebula_2.13', version: 'latest version'
 ```
 
