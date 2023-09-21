@@ -16,7 +16,7 @@ import java.util.Optional;
  * @author 梦境迷离
  * @version 1.0, 2023/9/20
  */
-public class SimpleNebulaClusterTest  {
+public class SimpleNebulaClusterTest {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleNebulaClusterTest.class);
 
@@ -26,30 +26,33 @@ public class SimpleNebulaClusterTest  {
 
 
     public static void testNebulaContainerCluster() {
-        NebulaClusterContainer cluster = new NebulaSimpleClusterContainer("v3.6.0", Optional.empty());
-        cluster.start();
-        GenericContainer<?> meta = cluster.getMetad().head();
-        GenericContainer<?> storage = cluster.getStoraged().head();
-        GenericContainer<?> graph = cluster.getGraphd().head();
 
-        int instanceIndex = 1;
+        try (NebulaClusterContainer cluster = new NebulaSimpleClusterContainer("v3.6.0", Optional.empty())) {
+            cluster.start();
+            GenericContainer<?> meta = cluster.getMetadList().get(0);
+            GenericContainer<?> storage = cluster.getStoragedList().get(0);
+            GenericContainer<?> graph = cluster.getGraphdList().get(0);
 
-        useClientToCreateSpaceTag();
+            useClientToCreateSpaceTag();
+            int instanceIndex = 1;
 
-        assert (meta.getContainerName().startsWith(Nebula.MetadName() + instanceIndex));
-        assert (storage.getContainerName().startsWith(Nebula.StoragedName() + instanceIndex));
-        assert (graph.getContainerName().startsWith(Nebula.GraphdName() + instanceIndex));
+            assert (meta.getContainerName().startsWith(Nebula.MetadName() + instanceIndex));
+            assert (storage.getContainerName().startsWith(Nebula.StoragedName() + instanceIndex));
+            assert (graph.getContainerName().startsWith(Nebula.GraphdName() + instanceIndex));
 
-        assert cluster.graphdPortJava().head() == Nebula.GraphdExposedPort();
-        assert cluster.metadPortJava().head() == Nebula.MetadExposedPort();
-        assert cluster.storagedPortJava().head() == Nebula.StoragedExposedPort();
+            assert cluster.getGraphdPortList().get(0) == Nebula.GraphdExposedPort();
+            assert cluster.getMetadPortList().get(0) == Nebula.MetadExposedPort();
+            assert cluster.getStoragedPortList().get(0) == Nebula.StoragedExposedPort();
 
-        assert cluster.getStoraged().head().getDependencies().size() == 1;
-        assert cluster.getMetad().head().getDependencies().isEmpty();
-        assert cluster.getGraphd().head().getDependencies().size() == 1;
+            assert cluster.storagedList().head().getDependencies().size() == 1;
+            assert cluster.metadList().head().getDependencies().isEmpty();
+            assert cluster.graphdList().head().getDependencies().size() == 1;
 
-        cluster.stop();
-        
+            if (cluster.existsRunningContainer()) {
+                cluster.stop();
+            }
+        }
+
     }
 
     private static void useClientToCreateSpaceTag() {
@@ -66,9 +69,7 @@ public class SimpleNebulaClusterTest  {
             }
 
             session = pool.getSession("root", "nebula", false);
-            session.execute("CREATE SPACE IF NOT EXISTS test(vid_type=fixed_string(20));"
-                    + "USE test;"
-                    + "CREATE TAG IF NOT EXISTS player(name string, age int);");
+            session.execute("CREATE SPACE IF NOT EXISTS test(vid_type=fixed_string(20));" + "USE test;" + "CREATE TAG IF NOT EXISTS player(name string, age int);");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

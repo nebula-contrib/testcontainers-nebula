@@ -32,53 +32,60 @@ final class NebulaSimpleClusterContainer(
   def this(version: String, absoluteBindingPath: java.util.Optional[String]) =
     this(version, absoluteBindingPath.toScala)
 
-  private val MetaIp    = increaseIpLastNum(gateway, 2)
-  private val StorageIp = increaseIpLastNum(gateway, 3)
-  private val GraphIp   = increaseIpLastNum(gateway, 4)
-  private val ConsoleIp = increaseIpLastNum(gateway, 5)
+  private val MetaIpPortMapping: List[(String, Int)] = List(increaseIpLastNum(gateway, 2) -> Nebula.MetadExposedPort)
+  private val StorageIpMapping: List[(String, Int)]  = List(increaseIpLastNum(gateway, 3) -> Nebula.StoragedExposedPort)
+  private val GraphIpMapping: List[(String, Int)]    = List(increaseIpLastNum(gateway, 4) -> Nebula.GraphdExposedPort)
+  private val ConsoleIp                              = increaseIpLastNum(gateway, 5)
 
-  logger.info(s"Nebula metad started at ip: $MetaIp")
-  logger.info(s"Nebula storaged started at ip: $StorageIp")
-  logger.info(s"Nebula graphd started at ip: $GraphIp")
+  private def generateIpAddrs(ipPortMapping: List[(String, Int)]): String =
+    ipPortMapping.map(kv => s"${kv._1}:${kv._2}").mkString(",")
 
-  protected override val metad: List[GenericContainer[_]] = List(
-    new NebulaMetadContainer(
-      version,
-      MetaIp,
-      s"$MetaIp:${Nebula.MetadExposedPort}",
-      NebulaMetadContainer.defaultPortBindings(Nebula.MetadExposedPort),
-      absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaMetadContainer.defaultVolumeBindings(p))
-    )
-  )
+  private lazy val metaAddrs: String = generateIpAddrs(MetaIpPortMapping)
 
-  protected override val storaged: List[GenericContainer[_]] = List(
-    new NebulaStoragedContainer(
-      version,
-      StorageIp,
-      s"$MetaIp:${Nebula.MetadExposedPort}",
-      NebulaStoragedContainer.defaultPortBindings(Nebula.StoragedExposedPort),
-      absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaStoragedContainer.defaultVolumeBindings(p))
-    )
-  ).map(_.dependsOn(metad: _*))
+  logger.info(s"Nebula meta nodes started at ip: ${generateIpAddrs(MetaIpPortMapping)}")
+  logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(StorageIpMapping)}")
+  logger.info(s"Nebula graph nodes started at ip: ${generateIpAddrs(GraphIpMapping)}")
 
-  protected override val graphd: List[GenericContainer[_]] = List(
+  protected override val metad: List[GenericContainer[_]] =
+    MetaIpPortMapping.map { case (ip, port) =>
+      new NebulaMetadContainer(
+        version,
+        ip,
+        metaAddrs,
+        NebulaMetadContainer.defaultPortBindings(port),
+        absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaMetadContainer.defaultVolumeBindings(p))
+      )
+    }
+
+  protected override val storaged: List[GenericContainer[_]] =
+    StorageIpMapping.map { case (ip, port) =>
+      new NebulaStoragedContainer(
+        version,
+        ip,
+        metaAddrs,
+        NebulaStoragedContainer.defaultPortBindings(port),
+        absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaStoragedContainer.defaultVolumeBindings(p))
+      )
+    }.map(_.dependsOn(metad: _*))
+
+  protected override val graphd: List[GenericContainer[_]] = GraphIpMapping.map { case (ip, port) =>
     new NebulaGraphdContainer(
       version,
-      GraphIp,
-      s"$MetaIp:${Nebula.MetadExposedPort}",
-      NebulaGraphdContainer.defaultPortBindings(Nebula.GraphdExposedPort),
+      ip,
+      metaAddrs,
+      NebulaGraphdContainer.defaultPortBindings(port),
       absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaGraphdContainer.defaultVolumeBindings(p))
     )
-  ).map(_.dependsOn(metad: _*))
+  }.map(_.dependsOn(metad: _*))
 
-  protected override val console: NebulaConsoleContainer =
-    new NebulaConsoleContainer(
-      version,
-      ConsoleIp,
-      graphdIp = GraphIp,
-      graphdPort = Nebula.GraphdExposedPort,
-      storagedAddrs = List(
-        StorageIp -> Nebula.StoragedExposedPort
-      )
-    )
+  protected override val console: NebulaConsoleContainer = new NebulaConsoleContainer(
+    version,
+    ConsoleIp,
+    graphdIp = GraphIpMapping.head._1,
+    graphdPort = GraphIpMapping.head._2,
+    storagedAddrs = StorageIpMapping
+  )
+
+  override def existsRunningContainer: Boolean =
+    metad.exists(_.isRunning) || storaged.exists(_.isRunning) || graphd.exists(_.isRunning) || console.isRunning
 }

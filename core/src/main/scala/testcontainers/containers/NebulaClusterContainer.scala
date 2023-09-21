@@ -1,5 +1,6 @@
 package testcontainers.containers
 
+import java.util.{ List => JList }
 import java.util.concurrent.TimeUnit
 
 import scala.concurrent.{ Await, Future }
@@ -30,7 +31,7 @@ abstract class NebulaClusterContainer extends Startable {
     .asScala
     .headOption
     .flatMap(_.getIpam.getConfig.asScala.map(s => s.getGateway).headOption)
-    .head
+    .head // bridge is a pre-defined network and cannot be removed
 
   protected def increaseIpLastNum(ip: String, num: Int): String = {
     val ipSplits = ip.split("\\.").toList
@@ -45,6 +46,8 @@ abstract class NebulaClusterContainer extends Startable {
   protected val graphd: List[GenericContainer[_]] = List.empty
 
   protected val console: NebulaConsoleContainer
+
+  def existsRunningContainer: Boolean
 
   final override def start(): Unit = {
     storaged.foreach { sd =>
@@ -89,37 +92,63 @@ abstract class NebulaClusterContainer extends Startable {
 
   final def allContainers: List[GenericContainer[_]] = List(metad, storaged, graphd, List(console)).flatten
 
-  final def graphdUrl: List[String] =
-    graphd.map(gd => String.format("http://" + gd.getHost + ":" + gd.getMappedPort(Nebula.GraphdExposedPort)))
+  final def graphdUrlList: List[String] =
+    graphd.map(gd => s"http://${gd.getHost}:${gd.getMappedPort(Nebula.GraphdExposedPort)}")
 
-  final def metadUrl: List[String] =
-    metad.map(md => String.format("http://" + md.getHost + ":" + md.getMappedPort(Nebula.MetadExposedPort)))
+  final def metadUrlList: List[String] =
+    metad.map(md => s"http://${md.getHost}:${md.getMappedPort(Nebula.MetadExposedPort)}")
 
-  final def storagedUrl: List[String] =
-    storaged.map(sd => String.format("http://" + sd.getHost + ":" + sd.getMappedPort(Nebula.StoragedExposedPort)))
+  final def storagedUrlList: List[String] =
+    storaged.map(sd => s"http://${sd.getHost}:${sd.getMappedPort(Nebula.StoragedExposedPort)}")
 
-  final def graphdPort: List[Int] = graphd.map(_.getMappedPort(Nebula.GraphdExposedPort).intValue())
+  final def graphdPortList: List[Int] = graphd.map(_.getMappedPort(Nebula.GraphdExposedPort).intValue())
 
-  final def metadPort: List[Int] = metad.map(_.getMappedPort(Nebula.MetadExposedPort).intValue())
+  final def metadPortList: List[Int] = metad.map(_.getMappedPort(Nebula.MetadExposedPort).intValue())
 
-  final def storagedPort: List[Int] = storaged.map(_.getMappedPort(Nebula.StoragedExposedPort).intValue())
+  final def storagedPortList: List[Int] = storaged.map(_.getMappedPort(Nebula.StoragedExposedPort).intValue())
 
-  final def graphdPortJava: List[Integer] = graphdPort.map(Integer.valueOf)
+  final def graphdHostList: List[String] = graphd.map(_.getHost)
 
-  final def metadPortJava: List[Integer] = metadPort.map(Integer.valueOf)
+  final def metadHostList: List[String] = metad.map(_.getHost)
 
-  final def storagedPortJava: List[Integer] = storagedPort.map(Integer.valueOf)
+  final def storagedHostList: List[String] = storaged.map(_.getHost)
 
-  final def graphdHost: List[String] = graphd.map(_.getHost)
+  final def metadList: List[GenericContainer[_]] = metad
 
-  final def metadHost: List[String] = metad.map(_.getHost)
+  final def storagedList: List[GenericContainer[_]] = storaged
 
-  final def storagedHost: List[String] = storaged.map(_.getHost)
+  final def graphdList: List[GenericContainer[_]] = graphd
 
-  final def getMetad: List[GenericContainer[_]] = metad
+  /**
+   * *********************Java API**************************
+   */
+  final def getGraphdPortList: JList[Integer] = graphdPortList.map(Integer.valueOf).asJava
 
-  final def getStoraged: List[GenericContainer[_]] = storaged
+  final def getMetadPortList: JList[Integer] = metadPortList.map(Integer.valueOf).asJava
 
-  final def getGraphd: List[GenericContainer[_]] = graphd
+  final def getStoragedPortList: JList[Integer] = storagedPortList.map(Integer.valueOf).asJava
+
+  final def getMetadList: JList[GenericContainer[_]] = metadList.asJava
+
+  final def getStoragedList: JList[GenericContainer[_]] = storagedList.asJava
+
+  final def getGraphdList: JList[GenericContainer[_]] = graphdList.asJava
+
+  final def getGraphdHostList: JList[String] = graphdHostList.asJava
+
+  final def getMetadHostList: JList[String] = metadHostList.asJava
+
+  final def getStoragedHostList: JList[String] = storagedHostList.asJava
+
+  final def getAllContainers: JList[GenericContainer[_]] = allContainers.asJava
+
+  final def getGraphdUrlList: JList[String] =
+    graphdUrlList.asJava
+
+  final def getMetadUrlList: JList[String] =
+    metadUrlList.asJava
+
+  final def getStoragedUrlList: JList[String] =
+    storagedUrlList.asJava
 
 }

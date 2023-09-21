@@ -21,13 +21,13 @@ trait NebulaSpec extends ZIOSpecDefault {
   val container: NebulaSimpleClusterContainer = new NebulaSimpleClusterContainer
   container.start()
 
-  println(container.metadUrl)
-  println(container.graphdUrl)
+  println(container.metadUrlList)
+  println(container.graphdUrlList)
 
-  val meta          = ZioNebulaEnvironment.defaultMeta(container.metadHost.head, container.metadPort.head)
-  val client        = ZioNebulaEnvironment.defaultClient(container.graphdHost.head, container.graphdPort.head)
-  val sessionClient = ZioNebulaEnvironment.defaultSession(container.graphdHost.head, container.graphdPort.head)
-  val storage       = ZioNebulaEnvironment.defaultStorage(container.metadHost.head, container.metadPort.head)
+  val meta          = ZioNebulaEnvironment.defaultMeta(container.metadHostList.head, container.metadPortList.head)
+  val client        = ZioNebulaEnvironment.defaultClient(container.graphdHostList.head, container.graphdPortList.head)
+  val sessionClient = ZioNebulaEnvironment.defaultSession(container.graphdHostList.head, container.graphdPortList.head)
+  val storage       = ZioNebulaEnvironment.defaultStorage(container.metadHostList.head, container.metadPortList.head)
 
   override def spec =
     (specLayered @@ beforeAll(
