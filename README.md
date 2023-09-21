@@ -42,11 +42,8 @@ testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebul
 
 ## Usage Instructions
 
-These containers were starting:
-- graphd
-- metad
-- storaged
-- console
+1. `NebulaSimpleClusterContainer.scala` creates four container instances: graphd,metad,storaged,console.
+2. `NebulaClusterContainer.scala` provides a generic definition, and any number of clusters can be created by implementing its abstraction methods, ports and volumes can be modified.
 
 Java example: [SimpleNebulaClusterTest](./examples/src/main/java/testcontainers/containers/SimpleNebulaClusterTest.java)
 

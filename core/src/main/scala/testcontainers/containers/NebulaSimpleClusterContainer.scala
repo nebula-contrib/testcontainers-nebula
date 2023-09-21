@@ -32,15 +32,18 @@ final class NebulaSimpleClusterContainer(
   def this(version: String, absoluteBindingPath: java.util.Optional[String]) =
     this(version, absoluteBindingPath.toScala)
 
-  private val MetaIpPortMapping: List[(String, Int)] = List(increaseIpLastNum(gateway, 2) -> Nebula.MetadExposedPort)
-  private val StorageIpMapping: List[(String, Int)]  = List(increaseIpLastNum(gateway, 3) -> Nebula.StoragedExposedPort)
-  private val GraphIpMapping: List[(String, Int)]    = List(increaseIpLastNum(gateway, 4) -> Nebula.GraphdExposedPort)
-  private val ConsoleIp                              = increaseIpLastNum(gateway, 5)
+  protected override val MetaIpPortMapping: List[(String, Int)] = List(
+    increaseIpLastNum(gateway, 2) -> Nebula.MetadExposedPort
+  )
 
-  private def generateIpAddrs(ipPortMapping: List[(String, Int)]): String =
-    ipPortMapping.map(kv => s"${kv._1}:${kv._2}").mkString(",")
+  protected override val StorageIpMapping: List[(String, Int)] = List(
+    increaseIpLastNum(gateway, 3) -> Nebula.StoragedExposedPort
+  )
 
-  private lazy val metaAddrs: String = generateIpAddrs(MetaIpPortMapping)
+  protected override val GraphIpMapping: List[(String, Int)] = List(
+    increaseIpLastNum(gateway, 4) -> Nebula.GraphdExposedPort
+  )
+  protected override val ConsoleIp: String                   = increaseIpLastNum(gateway, 5)
 
   logger.info(s"Nebula meta nodes started at ip: ${generateIpAddrs(MetaIpPortMapping)}")
   logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(StorageIpMapping)}")

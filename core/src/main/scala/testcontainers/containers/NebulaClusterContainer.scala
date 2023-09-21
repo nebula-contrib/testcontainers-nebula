@@ -20,6 +20,16 @@ import org.testcontainers.lifecycle.Startable
  */
 abstract class NebulaClusterContainer extends Startable {
 
+  protected val MetaIpPortMapping: List[(String, Int)]
+  protected val StorageIpMapping: List[(String, Int)] 
+  protected val GraphIpMapping: List[(String, Int)] 
+  protected val ConsoleIp :String
+
+  protected lazy val metaAddrs: String = generateIpAddrs(MetaIpPortMapping)
+
+  protected def generateIpAddrs(ipPortMapping: List[(String, Int)]): String =
+    ipPortMapping.map(kv => s"${kv._1}:${kv._2}").mkString(",")
+    
   /**
    * docker container ip
    */
