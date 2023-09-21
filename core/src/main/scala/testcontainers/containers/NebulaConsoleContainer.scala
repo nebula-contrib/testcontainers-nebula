@@ -1,7 +1,6 @@
 package testcontainers.containers
 
-import java.util.UUID
-
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
@@ -35,7 +34,7 @@ final class NebulaConsoleContainer(
       storagedAddrs
     )
 
-  override def getContainerName: String = Nebula.ConsoleName + "_" + UUID.randomUUID().toString
+  override def getContainerName: String = Nebula.ConsoleName + "-" + Nebula.SessionId
 
   def showHostsCommand: Seq[String] = Seq(
     s"sh",

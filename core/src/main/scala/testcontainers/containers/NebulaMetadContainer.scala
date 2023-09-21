@@ -1,11 +1,10 @@
 package testcontainers.containers
 
-import java.util.UUID
-
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.utility.DockerImageName
 
-import com.github.dockerjava.api.model.{ ExposedPort, _ }
+import com.github.dockerjava.api.model._
 
 import testcontainers.containers.Nebula._
 
@@ -58,7 +57,7 @@ final class NebulaMetadContainer(
   ) =
     this(Nebula.DefaultMetadImageName.withTag(version), containerIp, metaAddrs, portsBindings, bindings, instanceIndex)
 
-  override def getContainerName: String = Nebula.MetadName + instanceIndex + "_" + UUID.randomUUID().toString
+  override def getContainerName: String = Nebula.MetadName + instanceIndex + "-" + Nebula.SessionId
 
   override def commands(containerIp: String, metaAddrs: String): Seq[String] =
     Seq(

@@ -42,9 +42,6 @@ testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebul
 
 ## Usage Instructions
 
-1. `NebulaSimpleClusterContainer.scala` creates four container instances: graphd,metad,storaged,console.
-2. `NebulaClusterContainer.scala` provides a generic definition, and any number of clusters can be created by implementing its abstraction methods, ports and volumes can be modified.
-
 Java example: [SimpleNebulaCluster](./examples/src/main/java/testcontainers/containers/SimpleNebulaCluster.java)
 
 ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/zio/NebulaSpec.scala)
@@ -53,3 +50,10 @@ The zio module provides default configurations for better integration with zio-n
 ```scala
 "io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % <latest version>
 ```
+
+Details:
+
+1. `NebulaSimpleClusterContainer.scala` creates four container instances: graphd,metad,storaged,console.
+2. `NebulaClusterContainer.scala` provides a generic definition, and any number of clusters can be created by implementing its abstraction methods, ports and volumes can be modified.
+
+![testcontainers_nebula](testcontainers_nebula.png)

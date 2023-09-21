@@ -2,7 +2,12 @@ package testcontainers.containers
 
 import java.time.Duration
 
+import scala.jdk.CollectionConverters._
+
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.utility.DockerImageName
+
+import com.github.dockerjava.api.DockerClient
 
 /**
  * @author
@@ -67,5 +72,23 @@ object Nebula {
   final val MetadName    = "metad"
   final val StoragedName = "storaged"
   final val ConsoleName  = "console"
+
+  final val dockerClient: DockerClient = DockerClientFactory.lazyClient()
+
+  final val Ryuk = "/testcontainers-ryuk"
+
+  final lazy val SessionId =
+    dockerClient
+      .listContainersCmd()
+      .exec()
+      .asScala
+      .toList
+      .filter { c =>
+        c.getNames.toList.exists(_.startsWith(Ryuk))
+      }
+      .flatMap(_.getNames.headOption.toList)
+      .headOption
+      .map(_.stripPrefix(Ryuk + "-"))
+      .orNull
 
 }

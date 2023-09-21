@@ -34,17 +34,17 @@ final class NebulaSimpleClusterContainer(
 
   // TODO: determine available IPs?
   protected override val MetaIpPortMapping: List[(String, Int)] = List(
-    increaseIpLastNum(gateway, 2) -> Nebula.MetadExposedPort
+    increaseIpBasedOnRyukIp(1) -> Nebula.MetadExposedPort
   )
 
   protected override val StorageIpMapping: List[(String, Int)] = List(
-    increaseIpLastNum(gateway, 3) -> Nebula.StoragedExposedPort
+    increaseIpBasedOnRyukIp(2) -> Nebula.StoragedExposedPort
   )
 
   protected override val GraphIpMapping: List[(String, Int)] = List(
-    increaseIpLastNum(gateway, 4) -> Nebula.GraphdExposedPort
+    increaseIpBasedOnRyukIp(3) -> Nebula.GraphdExposedPort
   )
-  protected override val ConsoleIp: String                   = increaseIpLastNum(gateway, 5)
+  protected override val ConsoleIp: String                   = increaseIpBasedOnRyukIp(4)
 
   logger.info(s"Nebula meta nodes started at ip: ${generateIpAddrs(MetaIpPortMapping)}")
   logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(StorageIpMapping)}")

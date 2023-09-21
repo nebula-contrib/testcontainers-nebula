@@ -1,6 +1,6 @@
 package testcontainers.containers
 
-import java.util.{ List => JList }
+import java.util.{ Collections, List => JList }
 import java.util.concurrent.TimeUnit
 
 import scala.concurrent.{ Await, Future }
@@ -12,6 +12,8 @@ import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.lifecycle.Startable
+
+import com.github.dockerjava.api.DockerClient
 
 /**
  * @author
@@ -30,21 +32,36 @@ abstract class NebulaClusterContainer extends Startable {
   protected def generateIpAddrs(ipPortMapping: List[(String, Int)]): String =
     ipPortMapping.map(kv => s"${kv._1}:${kv._2}").mkString(",")
 
-  /**
-   * get a docker bridge gateway
-   */
-  protected lazy val gateway: String = DockerClientFactory
-    .lazyClient()
-    .listNetworksCmd()
-    .withNameFilter("bridge")
+  private val networkType = "bridge"
+
+  private lazy val testcontainersContainerId: String = Nebula.dockerClient
+    .listContainersCmd()
     .exec()
     .asScala
+    .toList
+    .filter { c =>
+      c.getNames.toList.exists(_.startsWith("/testcontainers-ryuk"))
+    }
+    .map(_.getId)
     .headOption
-    .flatMap(_.getIpam.getConfig.asScala.map(s => s.getGateway).headOption)
-    .head // bridge is a pre-defined network and cannot be removed
+    .orNull
 
-  protected def increaseIpLastNum(ip: String, num: Int): String = {
-    val ipSplits = ip.split("\\.").toList
+  protected lazy val testcontainersContainerIp: String =
+    Nebula.dockerClient
+      .inspectContainerCmd(testcontainersContainerId)
+      .exec()
+      .getNetworkSettings
+      .getNetworks
+      .asScala
+      .get(networkType)
+      .map(_.getIpAddress)
+      .orNull
+
+  protected def increaseIpBasedOnRyukIp(num: Int): String = {
+    if (testcontainersContainerIp == null) {
+      throw new IllegalStateException("IPAddress cannot be null!")
+    }
+    val ipSplits = testcontainersContainerIp.split("\\.").toList
     val last     = ipSplits.last.toInt
     ipSplits.updated(ipSplits.size - 1, last + num).mkString(".")
   }

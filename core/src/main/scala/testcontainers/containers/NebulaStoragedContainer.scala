@@ -1,7 +1,6 @@
 package testcontainers.containers
 
-import java.util.UUID
-
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.utility.DockerImageName
 
@@ -65,7 +64,7 @@ final class NebulaStoragedContainer(
       instanceIndex
     )
 
-  override def getContainerName: String = Nebula.StoragedName + instanceIndex + "_" + UUID.randomUUID().toString
+  override def getContainerName: String = Nebula.StoragedName + instanceIndex + "-" + Nebula.SessionId
 
   override def commands(containerIp: String, metaAddrs: String): Seq[String] =
     Seq(

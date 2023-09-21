@@ -1,8 +1,7 @@
 package testcontainers
 package containers
 
-import java.util.UUID
-
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.utility.DockerImageName
 
@@ -54,7 +53,7 @@ final class NebulaGraphdContainer(
   ) =
     this(Nebula.DefaultGraphdImageName.withTag(version), containerIp, metaAddrs, portsBindings, bindings, instanceIndex)
 
-  override def getContainerName: String = Nebula.GraphdName + instanceIndex + "_" + UUID.randomUUID().toString
+  override def getContainerName: String = Nebula.GraphdName + instanceIndex + "-" + Nebula.SessionId
 
   override def commands(containerIp: String, metaAddrs: String): Seq[String] =
     Seq(

@@ -27,9 +27,6 @@ abstract class BaseContainer[T <: GenericContainer[T]](dockerImageName: DockerIm
   override def getLivenessCheckPortNumbers: util.Set[Integer] =
     portsBindings.map(_.getExposedPort.getPort).toSet.map(this.getMappedPort).asJava
 
-  def customHostConfig: HostConfig =
-    new HostConfig().withPortBindings(portsBindings: _*)
-
   this
     .withEnv("USER", Nebula.Username)
     .withEnv("TZ", Nebula.TZ)
@@ -37,8 +34,10 @@ abstract class BaseContainer[T <: GenericContainer[T]](dockerImageName: DockerIm
     .withCreateContainerCmdModifier(cmd =>
       cmd
         .withName(getContainerName)
-        .withHostConfig(customHostConfig)
         .withIpv4Address(containerIp)
+        .getHostConfig
+        .withPortBindings(portsBindings: _*)
+        .withAutoRemove(true)
     )
     .withCommand(commands(containerIp, metaAddrs): _*)
 
