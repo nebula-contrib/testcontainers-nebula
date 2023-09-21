@@ -45,7 +45,7 @@ testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebul
 1. `NebulaSimpleClusterContainer.scala` creates four container instances: graphd,metad,storaged,console.
 2. `NebulaClusterContainer.scala` provides a generic definition, and any number of clusters can be created by implementing its abstraction methods, ports and volumes can be modified.
 
-Java example: [SimpleNebulaClusterTest](./examples/src/main/java/testcontainers/containers/SimpleNebulaClusterTest.java)
+Java example: [SimpleNebulaCluster](./examples/src/main/java/testcontainers/containers/SimpleNebulaCluster.java)
 
 ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/zio/NebulaSpec.scala)
 

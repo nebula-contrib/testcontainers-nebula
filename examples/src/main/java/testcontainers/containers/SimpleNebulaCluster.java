@@ -16,9 +16,9 @@ import java.util.Optional;
  * @author 梦境迷离
  * @version 1.0, 2023/9/20
  */
-public class SimpleNebulaClusterTest {
+public class SimpleNebulaCluster {
 
-    private static final Logger log = LoggerFactory.getLogger(SimpleNebulaClusterTest.class);
+    private static final Logger log = LoggerFactory.getLogger(SimpleNebulaCluster.class);
 
     public static void main(String[] args) {
         testNebulaContainerCluster();
