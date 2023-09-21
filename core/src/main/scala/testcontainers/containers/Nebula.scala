@@ -89,6 +89,6 @@ object Nebula {
       .flatMap(_.getNames.headOption.toList)
       .headOption
       .map(_.stripPrefix(Ryuk + "-"))
-      .orNull
+      .getOrElse(DockerClientFactory.SESSION_ID)
 
 }

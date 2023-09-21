@@ -7,6 +7,7 @@ import zio.test._
 import zio.test.TestAspect._
 
 import testcontainers.containers.NebulaSimpleClusterContainer
+import testcontainers.containers.znebula.ext._
 
 trait NebulaSpec extends ZIOSpecDefault {
 
