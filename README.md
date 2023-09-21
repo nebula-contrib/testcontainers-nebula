@@ -48,7 +48,9 @@ ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/znebula
 
 The zio module provides default configurations for better integration with zio-nebula, just adding dependency:
 ```scala
-"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % <latest version>
+"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % 'latest version'
+// need add zio-nebula dependency 
+"io.github.jxnu-liguobin" %% "zio-nebula" % 'latest version'
 ```
 
 Details:
