@@ -32,6 +32,7 @@ final class NebulaSimpleClusterContainer(
   def this(version: String, absoluteBindingPath: java.util.Optional[String]) =
     this(version, absoluteBindingPath.toScala)
 
+  // TODO: determine available IPs?
   protected override val MetaIpPortMapping: List[(String, Int)] = List(
     increaseIpLastNum(gateway, 2) -> Nebula.MetadExposedPort
   )
