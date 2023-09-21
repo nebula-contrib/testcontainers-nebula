@@ -44,7 +44,7 @@ testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebul
 
 Java example: [SimpleNebulaCluster](./examples/src/main/java/testcontainers/containers/SimpleNebulaCluster.java)
 
-ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/zio/NebulaSpec.scala)
+ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/znebula/NebulaSpec.scala)
 
 The zio module provides default configurations for better integration with zio-nebula, just adding dependency:
 ```scala

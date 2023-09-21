@@ -1,4 +1,4 @@
-package testcontainers.containers.zio
+package testcontainers.containers.znebula
 
 import zio._
 import zio.nebula._
