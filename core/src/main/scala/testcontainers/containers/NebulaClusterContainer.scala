@@ -1,6 +1,6 @@
 package testcontainers.containers
 
-import java.util.{ Collections, List => JList }
+import java.util.{ List => JList }
 import java.util.concurrent.TimeUnit
 
 import scala.concurrent.{ Await, Future }
@@ -9,11 +9,8 @@ import scala.concurrent.duration.DurationInt
 import scala.jdk.CollectionConverters._
 
 import org.rnorth.ducttape.unreliables.Unreliables
-import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.lifecycle.Startable
-
-import com.github.dockerjava.api.DockerClient
 
 /**
  * @author
@@ -46,7 +43,7 @@ abstract class NebulaClusterContainer extends Startable {
     .headOption
     .orNull
 
-  protected lazy val testcontainersContainerIp: String =
+  private lazy val testcontainersContainerIp: String =
     Nebula.dockerClient
       .inspectContainerCmd(testcontainersContainerId)
       .exec()
@@ -66,11 +63,11 @@ abstract class NebulaClusterContainer extends Startable {
     ipSplits.updated(ipSplits.size - 1, last + num).mkString(".")
   }
 
-  protected val metads: List[GenericContainer[_]] = List.empty
+  protected val metads: List[GenericContainer[_]]
 
-  protected val storageds: List[GenericContainer[_]] = List.empty
+  protected val storageds: List[GenericContainer[_]]
 
-  protected val graphds: List[GenericContainer[_]] = List.empty
+  protected val graphds: List[GenericContainer[_]]
 
   protected val console: NebulaConsoleContainer
 
