@@ -15,9 +15,9 @@ import zio.nebula.storage.NebulaStorageClient
  */
 object ZioNebulaEnvironment {
 
-  val defaultUser  = "root"
-  val defaultPwd   = "nebula"
-  val defaultSpace = "test"
+  var defaultUser  = "root"
+  var defaultPwd   = "nebula"
+  var defaultSpace = "test"
 
   def defaultSession(host: String, port: Int): ZLayer[Scope, Throwable, SessionClient] =
     ZLayer.makeSome[Scope, SessionClient](
