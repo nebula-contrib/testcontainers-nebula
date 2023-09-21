@@ -46,7 +46,7 @@ final class NebulaSimpleClusterContainer(
   logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(StorageIpMapping)}")
   logger.info(s"Nebula graph nodes started at ip: ${generateIpAddrs(GraphIpMapping)}")
 
-  protected override val metad: List[GenericContainer[_]] =
+  protected override val metads: List[GenericContainer[_]] =
     MetaIpPortMapping.map { case (ip, port) =>
       new NebulaMetadContainer(
         version,
@@ -57,7 +57,7 @@ final class NebulaSimpleClusterContainer(
       )
     }
 
-  protected override val storaged: List[GenericContainer[_]] =
+  protected override val storageds: List[GenericContainer[_]] =
     StorageIpMapping.map { case (ip, port) =>
       new NebulaStoragedContainer(
         version,
@@ -66,9 +66,9 @@ final class NebulaSimpleClusterContainer(
         NebulaStoragedContainer.defaultPortBindings(port),
         absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaStoragedContainer.defaultVolumeBindings(p))
       )
-    }.map(_.dependsOn(metad: _*))
+    }.map(_.dependsOn(metads: _*))
 
-  protected override val graphd: List[GenericContainer[_]] = GraphIpMapping.map { case (ip, port) =>
+  protected override val graphds: List[GenericContainer[_]] = GraphIpMapping.map { case (ip, port) =>
     new NebulaGraphdContainer(
       version,
       ip,
@@ -76,7 +76,7 @@ final class NebulaSimpleClusterContainer(
       NebulaGraphdContainer.defaultPortBindings(port),
       absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaGraphdContainer.defaultVolumeBindings(p))
     )
-  }.map(_.dependsOn(metad: _*))
+  }.map(_.dependsOn(metads: _*))
 
   protected override val console: NebulaConsoleContainer = new NebulaConsoleContainer(
     version,
@@ -87,5 +87,5 @@ final class NebulaSimpleClusterContainer(
   )
 
   override def existsRunningContainer: Boolean =
-    metad.exists(_.isRunning) || storaged.exists(_.isRunning) || graphd.exists(_.isRunning) || console.isRunning
+    metads.exists(_.isRunning) || storageds.exists(_.isRunning) || graphds.exists(_.isRunning) || console.isRunning
 }

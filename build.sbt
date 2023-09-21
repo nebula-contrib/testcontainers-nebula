@@ -69,7 +69,10 @@ lazy val examples = project
     crossScalaVersions       := Nil,
     scalaVersion             := scala2_13Version,
     libraryDependencies ++= Seq(
-      "com.vesoft" % "client" % nebulaJavaClientVersion
+      // java 11
+      // ch/qos/logback/classic/spi/LogbackServiceProvider has been compiled by a more recent version of the Java Runtime (class file version 55.0)
+      "ch.qos.logback" % "logback-classic" % logbackVersion,
+      "com.vesoft"     % "client"          % nebulaJavaClientVersion
     ),
     Test / parallelExecution := false
   )

@@ -39,18 +39,18 @@ abstract class NebulaClusterContainer extends Startable {
     ipSplits.updated(ipSplits.size - 1, last + num).mkString(".")
   }
 
-  protected val metad: List[GenericContainer[_]] = List.empty
+  protected val metads: List[GenericContainer[_]] = List.empty
 
-  protected val storaged: List[GenericContainer[_]] = List.empty
+  protected val storageds: List[GenericContainer[_]] = List.empty
 
-  protected val graphd: List[GenericContainer[_]] = List.empty
+  protected val graphds: List[GenericContainer[_]] = List.empty
 
   protected val console: NebulaConsoleContainer
 
   def existsRunningContainer: Boolean
 
   final override def start(): Unit = {
-    storaged.foreach { sd =>
+    storageds.foreach { sd =>
       sd.start()
       Unreliables.retryUntilTrue(
         Nebula.StartTimeout.getSeconds.toInt,
@@ -62,7 +62,7 @@ abstract class NebulaClusterContainer extends Startable {
       )
     }
 
-    graphd.foreach { gd =>
+    graphds.foreach { gd =>
       gd.start()
       Unreliables.retryUntilTrue(
         Nebula.StartTimeout.getSeconds.toInt,
@@ -90,34 +90,34 @@ abstract class NebulaClusterContainer extends Startable {
     Await.result(res, Nebula.StopTimeout.seconds)
   }
 
-  final def allContainers: List[GenericContainer[_]] = List(metad, storaged, graphd, List(console)).flatten
+  final def allContainers: List[GenericContainer[_]] = metads ++ storageds ++ graphds ++ List(console)
 
   final def graphdUrlList: List[String] =
-    graphd.map(gd => s"http://${gd.getHost}:${gd.getMappedPort(Nebula.GraphdExposedPort)}")
+    graphds.map(gd => s"http://${gd.getHost}:${gd.getMappedPort(Nebula.GraphdExposedPort)}")
 
   final def metadUrlList: List[String] =
-    metad.map(md => s"http://${md.getHost}:${md.getMappedPort(Nebula.MetadExposedPort)}")
+    metads.map(md => s"http://${md.getHost}:${md.getMappedPort(Nebula.MetadExposedPort)}")
 
   final def storagedUrlList: List[String] =
-    storaged.map(sd => s"http://${sd.getHost}:${sd.getMappedPort(Nebula.StoragedExposedPort)}")
+    storageds.map(sd => s"http://${sd.getHost}:${sd.getMappedPort(Nebula.StoragedExposedPort)}")
 
-  final def graphdPortList: List[Int] = graphd.map(_.getMappedPort(Nebula.GraphdExposedPort).intValue())
+  final def graphdPortList: List[Int] = graphds.map(_.getMappedPort(Nebula.GraphdExposedPort).intValue())
 
-  final def metadPortList: List[Int] = metad.map(_.getMappedPort(Nebula.MetadExposedPort).intValue())
+  final def metadPortList: List[Int] = metads.map(_.getMappedPort(Nebula.MetadExposedPort).intValue())
 
-  final def storagedPortList: List[Int] = storaged.map(_.getMappedPort(Nebula.StoragedExposedPort).intValue())
+  final def storagedPortList: List[Int] = storageds.map(_.getMappedPort(Nebula.StoragedExposedPort).intValue())
 
-  final def graphdHostList: List[String] = graphd.map(_.getHost)
+  final def graphdHostList: List[String] = graphds.map(_.getHost)
 
-  final def metadHostList: List[String] = metad.map(_.getHost)
+  final def metadHostList: List[String] = metads.map(_.getHost)
 
-  final def storagedHostList: List[String] = storaged.map(_.getHost)
+  final def storagedHostList: List[String] = storageds.map(_.getHost)
 
-  final def metadList: List[GenericContainer[_]] = metad
+  final def metadList: List[GenericContainer[_]] = metads
 
-  final def storagedList: List[GenericContainer[_]] = storaged
+  final def storagedList: List[GenericContainer[_]] = storageds
 
-  final def graphdList: List[GenericContainer[_]] = graphd
+  final def graphdList: List[GenericContainer[_]] = graphds
 
   /**
    * *********************Java API**************************
