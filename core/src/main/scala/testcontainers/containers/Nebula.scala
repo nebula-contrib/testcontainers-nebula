@@ -1,13 +1,18 @@
 package testcontainers.containers
 
 import java.time.Duration
+import java.util.concurrent.Callable
 
 import scala.jdk.CollectionConverters._
 
 import org.testcontainers.DockerClientFactory
-import org.testcontainers.utility.DockerImageName
+import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import org.testcontainers.utility.{ DockerImageName, ResourceReaper }
 
 import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.command.InspectContainerResponse
+import com.github.dockerjava.api.exception.NotFoundException
+import com.github.dockerjava.api.model.Container
 
 /**
  * @author
@@ -28,6 +33,10 @@ object Nebula {
   final val MinLogLevel        = 0
   final val LOGLevel           = 0
   final val TZ                 = "Asia/Shanghai"
+
+  final val PollInterval     = Duration.ofMillis(50)
+  final val ContainerAtMost  = Duration.ofSeconds(10)
+  final val NebulaPortAtMost = Duration.ofSeconds(5)
 
   /**
    * default log path
@@ -77,18 +86,34 @@ object Nebula {
 
   final val Ryuk = "/testcontainers-ryuk"
 
-  final lazy val SessionId =
-    dockerClient
-      .listContainersCmd()
-      .exec()
-      .asScala
-      .toList
-      .filter { c =>
-        c.getNames.toList.exists(_.startsWith(Ryuk))
-      }
-      .flatMap(_.getNames.headOption.toList)
-      .headOption
-      .map(_.stripPrefix(Ryuk + "-"))
-      .getOrElse(DockerClientFactory.SESSION_ID)
+  final val RyukImageName = "testcontainers/ryuk:0.5.1"
+
+  final lazy val TestcontainersRyukContainer = {
+    val containersResponse = await()
+      .atMost(Nebula.ContainerAtMost)
+      .pollInterval(Nebula.PollInterval)
+      .pollInSameThread()
+      .until(
+        new Callable[List[Container]] {
+          override def call(): List[Container] =
+            Nebula.dockerClient
+              .listContainersCmd()
+              .exec()
+              .asScala
+              .toList
+        },
+        (cs: List[Container]) =>
+          cs.filter { c =>
+            c.getNames.toList.exists(_.startsWith(Ryuk))
+          }.flatMap(_.getNames.headOption.toList).headOption.nonEmpty
+      )
+
+    containersResponse.headOption
+  }
+
+  final lazy val SessionId = {
+    val ryukName = TestcontainersRyukContainer.map(_.getNames.headOption.toList).toList.flatten.headOption
+    ryukName.map(_.stripPrefix(Ryuk + "-")).getOrElse(DockerClientFactory.SESSION_ID)
+  }
 
 }

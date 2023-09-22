@@ -1,6 +1,5 @@
 package testcontainers.containers
 
-import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
@@ -58,6 +57,8 @@ final class NebulaConsoleContainer(
         .withName(getContainerName)
         .withEntrypoint("")
         .withIpv4Address(containerIp)
+        .getHostConfig
+        .withAutoRemove(true)
     )
     .withCommand(commands: _*)
 

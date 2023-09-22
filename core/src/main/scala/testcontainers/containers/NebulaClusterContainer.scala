@@ -1,7 +1,7 @@
 package testcontainers.containers
 
 import java.util.{ List => JList }
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ Callable, TimeUnit }
 
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -9,15 +9,30 @@ import scala.concurrent.duration.DurationInt
 import scala.jdk.CollectionConverters._
 
 import org.rnorth.ducttape.unreliables.Unreliables
+import org.slf4j.{ Logger, LoggerFactory }
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.lifecycle.Startable
+import org.testcontainers.shaded.com.google.common.base.Throwables
+import org.testcontainers.shaded.org.awaitility.Awaitility.await
+
+import com.github.dockerjava.api.command.InspectContainerResponse
+import com.github.dockerjava.api.exception.NotFoundException
+
+import testcontainers.containers.Nebula.dockerClient
 
 /**
  * @author
  *   梦境迷离
  * @version 1.0,2023/9/18
  */
+object NebulaClusterContainer {
+  private val logger = LoggerFactory.getLogger(classOf[NebulaClusterContainer])
+
+}
+
 abstract class NebulaClusterContainer extends Startable {
+
+  import NebulaClusterContainer.logger
 
   protected val MetaIpPortMapping: List[(String, Int)]
   protected val StorageIpMapping: List[(String, Int)]
@@ -31,28 +46,38 @@ abstract class NebulaClusterContainer extends Startable {
 
   private val networkType = "bridge"
 
-  private lazy val testcontainersContainerId: String = Nebula.dockerClient
-    .listContainersCmd()
-    .exec()
-    .asScala
-    .toList
-    .filter { c =>
-      c.getNames.toList.exists(_.startsWith("/testcontainers-ryuk"))
-    }
-    .map(_.getId)
-    .headOption
-    .orNull
+  private lazy val ryukContainerId: String = {
+    val containersResponse = Nebula.TestcontainersRyukContainer
+    containersResponse.map(_.getId).orNull
+  }
 
-  private lazy val testcontainersContainerIp: String =
-    Nebula.dockerClient
-      .inspectContainerCmd(testcontainersContainerId)
-      .exec()
-      .getNetworkSettings
-      .getNetworks
-      .asScala
+  private lazy val testcontainersContainerIp: String = {
+    val testcontainersContainerId = ryukContainerId
+
+    if (testcontainersContainerId == null) {
+      throw new IllegalStateException(s"ContainerId of the ${Nebula.Ryuk} cannot be null!")
+    }
+
+    val inspectContainerResponse = await()
+      .atMost(Nebula.ContainerAtMost)
+      .pollInterval(Nebula.PollInterval)
+      .pollInSameThread()
+      .until(
+        new Callable[InspectContainerResponse] {
+          override def call(): InspectContainerResponse =
+            Nebula.dockerClient.inspectContainerCmd(testcontainersContainerId).exec()
+        },
+        (t: InspectContainerResponse) =>
+          t.getNetworkSettings.getNetworks.asScala
+            .get(networkType)
+            .map(_.getIpAddress)
+            .isDefined
+      )
+    inspectContainerResponse.getNetworkSettings.getNetworks.asScala
       .get(networkType)
       .map(_.getIpAddress)
       .orNull
+  }
 
   protected def increaseIpBasedOnRyukIp(num: Int): String = {
     if (testcontainersContainerIp == null) {
@@ -72,6 +97,27 @@ abstract class NebulaClusterContainer extends Startable {
   protected val console: NebulaConsoleContainer
 
   def existsRunningContainer: Boolean
+
+  private def awaitMappedPort[S <: GenericContainer[S]](container: GenericContainer[S], exposedPort: Int): Int = {
+    val containerId = await()
+      .atMost(Nebula.NebulaPortAtMost)
+      .pollInterval(Nebula.PollInterval)
+      .pollInSameThread()
+      .until(
+        new Callable[String] {
+          override def call(): String =
+            container.getContainerId
+        },
+        (id: String) => id != null
+      )
+
+    if (containerId != null) {
+      container.getMappedPort(exposedPort).intValue()
+    } else
+      throw new IllegalStateException(
+        "Mapped port can only be obtained after the container is started, awaitMappedPort failed!"
+      )
+  }
 
   final override def start(): Unit = {
     storageds.foreach { sd =>
@@ -109,27 +155,87 @@ abstract class NebulaClusterContainer extends Startable {
     )
   }
 
-  final override def stop(): Unit = {
-    val res = Future.sequence(allContainers.map(f => Future(f)).map(_.map(_.stop())))
-    Await.result(res, Nebula.StopTimeout.seconds)
+  /**
+   * Copy from ResourceReaper#removeContainer method
+   */
+  private final def stopIfExistsRyukContainer(): Unit = {
+    var running = false
+    try {
+      val containerInfo = dockerClient.inspectContainerCmd(ryukContainerId).exec
+      running = containerInfo.getState != null && true == containerInfo.getState.getRunning
+    } catch {
+      case e: NotFoundException =>
+        logger.trace("Was going to stop container but it apparently no longer exists: {}", ryukContainerId)
+        return
+      case e: Exception =>
+        logger.trace(
+          "Error encountered when checking container for shutdown (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
+          ryukContainerId,
+          Throwables.getRootCause(e).getMessage
+        )
+        return
+    }
+
+    if (running) try {
+      logger.trace("Stopping container: {}", ryukContainerId)
+      dockerClient.killContainerCmd(ryukContainerId).exec
+      logger.trace("Stopped container: {}", Nebula.RyukImageName)
+    } catch {
+      case e: Exception =>
+        logger.trace(
+          "Error encountered shutting down container (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
+          ryukContainerId,
+          Throwables.getRootCause(e).getMessage
+        )
+    }
+
+    try dockerClient.inspectContainerCmd(ryukContainerId).exec
+    catch {
+      case e: Exception =>
+        logger.trace("Was going to remove container but it apparently no longer exists: {}", ryukContainerId)
+        return
+    }
+
+    try {
+      logger.trace("Removing container: {}", ryukContainerId)
+      dockerClient.removeContainerCmd(ryukContainerId).withRemoveVolumes(true).withForce(true).exec
+      logger.debug("Removed container and associated volume(s): {}", Nebula.RyukImageName)
+    } catch {
+      case e: Exception =>
+        logger.trace(
+          "Error encountered shutting down container (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
+          ryukContainerId,
+          Throwables.getRootCause(e).getMessage
+        )
+    }
   }
+
+  final override def stop(): Unit =
+    try {
+      val res = Future.sequence(allContainers.map(f => Future(f)).map(_.map(_.stop())))
+      Await.result(res, Nebula.StopTimeout.seconds)
+      stopIfExistsRyukContainer()
+    } catch {
+      case e: Throwable =>
+        logger.error("Stopped all containers failed", e)
+    }
 
   final def allContainers: List[GenericContainer[_]] = metads ++ storageds ++ graphds ++ List(console)
 
   final def graphdUrlList: List[String] =
-    graphds.map(gd => s"http://${gd.getHost}:${gd.getMappedPort(Nebula.GraphdExposedPort)}")
+    graphds.map(gd => s"http://${gd.getHost}:${awaitMappedPort(gd, Nebula.GraphdExposedPort)}")
 
   final def metadUrlList: List[String] =
-    metads.map(md => s"http://${md.getHost}:${md.getMappedPort(Nebula.MetadExposedPort)}")
+    metads.map(md => s"http://${md.getHost}:${awaitMappedPort(md, Nebula.MetadExposedPort)}")
 
   final def storagedUrlList: List[String] =
-    storageds.map(sd => s"http://${sd.getHost}:${sd.getMappedPort(Nebula.StoragedExposedPort)}")
+    storageds.map(sd => s"http://${sd.getHost}:${awaitMappedPort(sd, Nebula.StoragedExposedPort)}")
 
-  final def graphdPortList: List[Int] = graphds.map(_.getMappedPort(Nebula.GraphdExposedPort).intValue())
+  final def graphdPortList: List[Int] = graphds.map(gd => awaitMappedPort(gd, Nebula.GraphdExposedPort))
 
-  final def metadPortList: List[Int] = metads.map(_.getMappedPort(Nebula.MetadExposedPort).intValue())
+  final def metadPortList: List[Int] = metads.map(md => awaitMappedPort(md, Nebula.MetadExposedPort))
 
-  final def storagedPortList: List[Int] = storageds.map(_.getMappedPort(Nebula.StoragedExposedPort).intValue())
+  final def storagedPortList: List[Int] = storageds.map(sd => awaitMappedPort(sd, Nebula.StoragedExposedPort))
 
   final def graphdHostList: List[String] = graphds.map(_.getHost)
 
