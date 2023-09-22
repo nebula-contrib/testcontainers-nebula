@@ -165,47 +165,41 @@ abstract class NebulaClusterContainer extends Startable {
       running = containerInfo.getState != null && true == containerInfo.getState.getRunning
     } catch {
       case e: NotFoundException =>
-        logger.trace("Was going to stop container but it apparently no longer exists: {}", ryukContainerId)
+        logger.trace(s"Was going to stop container but it apparently no longer exists: ${ryukContainerId}")
         return
       case e: Exception =>
         logger.trace(
-          "Error encountered when checking container for shutdown (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
-          ryukContainerId,
-          Throwables.getRootCause(e).getMessage
+          s"Error encountered when checking container for shutdown (ID: $ryukContainerId) - it may not have been stopped, or may already be stopped. Root cause: ${Throwables.getRootCause(e).getMessage}"
         )
         return
     }
 
     if (running) try {
-      logger.trace("Stopping container: {}", ryukContainerId)
+      logger.trace("Stopping container: ${ryukContainerId}")
       dockerClient.killContainerCmd(ryukContainerId).exec
-      logger.trace("Stopped container: {}", Nebula.RyukImageName)
+      logger.trace(s"Stopped container: ${Nebula.RyukImageName}")
     } catch {
       case e: Exception =>
         logger.trace(
-          "Error encountered shutting down container (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
-          ryukContainerId,
-          Throwables.getRootCause(e).getMessage
+          s"Error encountered shutting down container (ID: $ryukContainerId) - it may not have been stopped, or may already be stopped. Root cause: ${Throwables.getRootCause(e).getMessage}"
         )
     }
 
     try dockerClient.inspectContainerCmd(ryukContainerId).exec
     catch {
       case e: Exception =>
-        logger.trace("Was going to remove container but it apparently no longer exists: {}", ryukContainerId)
+        logger.trace(s"Was going to remove container but it apparently no longer exists: $ryukContainerId")
         return
     }
 
     try {
-      logger.trace("Removing container: {}", ryukContainerId)
+      logger.trace(s"Removing container: $ryukContainerId")
       dockerClient.removeContainerCmd(ryukContainerId).withRemoveVolumes(true).withForce(true).exec
-      logger.debug("Removed container and associated volume(s): {}", Nebula.RyukImageName)
+      logger.debug(s"Removed container and associated volume(s): ${Nebula.RyukImageName}")
     } catch {
       case e: Exception =>
         logger.trace(
-          "Error encountered shutting down container (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
-          ryukContainerId,
-          Throwables.getRootCause(e).getMessage
+          s"Error encountered shutting down container (ID: $ryukContainerId) - it may not have been stopped, or may already be stopped. Root cause: ${Throwables.getRootCause(e).getMessage}"
         )
     }
   }
