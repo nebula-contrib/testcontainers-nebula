@@ -1,7 +1,6 @@
 package testcontainers
 package containers
 
-import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.utility.DockerImageName
 
