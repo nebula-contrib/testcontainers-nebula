@@ -1,15 +1,18 @@
 Testcontainers for NebulaGraph
 ---
 
-![CI][Badge-CI] [![Nexus (Snapshots)][Badge-Snapshots]][Link-Snapshots] [![Sonatype Nexus (Releases)][Badge-Release]][Link-Release]
+![CI][Badge-CI] [![Nexus (Snapshots)][Badge-Snapshots]][Link-Snapshots] [![Sonatype Nexus (Releases)][Badge-Releases]][Link-Releases]
 
 
 [Badge-CI]: https://github.com/hjfruit/testcontainers-nebula/actions/workflows/scala.yml/badge.svg
 [Badge-Snapshots]: https://img.shields.io/nexus/s/io.github.jxnu-liguobin/testcontainers-nebula_3?server=https%3A%2F%2Foss.sonatype.org
 [Link-Snapshots]: https://oss.sonatype.org/content/repositories/snapshots/io/github/jxnu-liguobin/testcontainers-nebula_3/
+
 [Link-Release]: https://index.scala-lang.org/jxnu-liguobin/testcontainers-nebula/testcontainers-nebula
 [Badge-Release]: https://index.scala-lang.org/jxnu-liguobin/testcontainers-nebula/testcontainers-nebula/latest-by-scala-version.svg?platform=jvm
 
+[Badge-Releases]: https://img.shields.io/nexus/r/io.github.jxnu-liguobin/testcontainers-nebula_3?server=https%3A%2F%2Foss.sonatype.org
+[Link-Releases]: https://oss.sonatype.org/content/repositories/releases/io/github/jxnu-liguobin/testcontainers-nebula_3/
 
 [Testcontainers](https://github.com/testcontainers/testcontainers-java)  is a Java library that supports JUnit tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.
 
