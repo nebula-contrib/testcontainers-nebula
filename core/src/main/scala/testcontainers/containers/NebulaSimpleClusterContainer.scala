@@ -37,6 +37,7 @@ final class NebulaSimpleClusterContainer(
     increaseIpBasedOnRyukIp(1) -> Nebula.MetadExposedPort
   )
 
+  // Does the IP have to be self-incrementing?
   protected override val StorageIpMapping: List[(String, Int)] = List(
     increaseIpBasedOnRyukIp(2) -> Nebula.StoragedExposedPort
   )

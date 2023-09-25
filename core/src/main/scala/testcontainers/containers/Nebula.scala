@@ -86,8 +86,6 @@ object Nebula {
 
   final val Ryuk = "/testcontainers-ryuk"
 
-  final val RyukImageName = "testcontainers/ryuk:0.5.1"
-
   final lazy val TestcontainersRyukContainer = {
     val containersResponse = await()
       .atMost(Nebula.ContainerAtMost)

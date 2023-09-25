@@ -177,7 +177,7 @@ abstract class NebulaClusterContainer extends Startable {
     if (running) try {
       logger.trace("Stopping container: ${ryukContainerId}")
       dockerClient.killContainerCmd(ryukContainerId).exec
-      logger.trace(s"Stopped container: ${Nebula.RyukImageName}")
+      logger.trace(s"Stopped container: ${Nebula.Ryuk.stripPrefix("/")}")
     } catch {
       case e: Exception =>
         logger.trace(
@@ -195,7 +195,7 @@ abstract class NebulaClusterContainer extends Startable {
     try {
       logger.trace(s"Removing container: $ryukContainerId")
       dockerClient.removeContainerCmd(ryukContainerId).withRemoveVolumes(true).withForce(true).exec
-      logger.debug(s"Removed container and associated volume(s): ${Nebula.RyukImageName}")
+      logger.debug(s"Removed container and associated volume(s): ${Nebula.Ryuk.stripPrefix("/")}")
     } catch {
       case e: Exception =>
         logger.trace(
