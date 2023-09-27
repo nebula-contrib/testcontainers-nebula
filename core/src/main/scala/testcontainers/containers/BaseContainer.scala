@@ -34,8 +34,8 @@ abstract class BaseContainer[T <: GenericContainer[T]](dockerImageName: DockerIm
     .withCreateContainerCmdModifier(cmd =>
       cmd
         .withName(getContainerName)
-        .withIpv4Address(containerIp)
         .getHostConfig
+        .withExtraHosts()
         .withPortBindings(portsBindings: _*)
         .withAutoRemove(true)
     )

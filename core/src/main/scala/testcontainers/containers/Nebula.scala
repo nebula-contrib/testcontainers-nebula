@@ -33,6 +33,8 @@ object Nebula {
   final val MinLogLevel        = 0
   final val LOGLevel           = 0
   final val TZ                 = "Asia/Shanghai"
+  final val NetworkName        = "testcontainers-nebula-network"
+  final val NetworkType        = "default"
 
   final val PollInterval     = Duration.ofMillis(50)
   final val ContainerAtMost  = Duration.ofSeconds(10)
@@ -113,5 +115,10 @@ object Nebula {
     val ryukName = TestcontainersRyukContainer.map(_.getNames.headOption.toList).toList.flatten.headOption
     ryukName.map(_.stripPrefix(Ryuk + "-")).getOrElse(DockerClientFactory.SESSION_ID)
   }
+
+  def removeTestcontainersNetwork(networkId: String): Unit =
+    Nebula.dockerClient
+      .removeNetworkCmd(networkId)
+      .exec()
 
 }

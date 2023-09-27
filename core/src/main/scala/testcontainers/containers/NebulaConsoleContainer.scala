@@ -56,7 +56,6 @@ final class NebulaConsoleContainer(
       cmd
         .withName(getContainerName)
         .withEntrypoint("")
-        .withIpv4Address(containerIp)
         .getHostConfig
         .withAutoRemove(true)
     )

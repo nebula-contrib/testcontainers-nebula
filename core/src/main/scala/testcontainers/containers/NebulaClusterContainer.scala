@@ -9,13 +9,12 @@ import scala.concurrent.duration.DurationInt
 import scala.jdk.CollectionConverters._
 
 import org.rnorth.ducttape.unreliables.Unreliables
-import org.slf4j.{ Logger, LoggerFactory }
-import org.testcontainers.containers.GenericContainer
+import org.slf4j.LoggerFactory
+import org.testcontainers.containers.{ GenericContainer, Network }
 import org.testcontainers.lifecycle.Startable
 import org.testcontainers.shaded.com.google.common.base.Throwables
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
-import com.github.dockerjava.api.command.InspectContainerResponse
 import com.github.dockerjava.api.exception.NotFoundException
 
 import testcontainers.containers.Nebula.dockerClient
@@ -34,56 +33,28 @@ abstract class NebulaClusterContainer extends Startable {
 
   import NebulaClusterContainer.logger
 
-  protected val MetaIpPortMapping: List[(String, Int)]
-  protected val StorageIpMapping: List[(String, Int)]
-  protected val GraphIpMapping: List[(String, Int)]
-  protected val ConsoleIp: String
+  protected val gateway: String
+  protected val nebulaNet: Network
+  protected val metaIpPortMapping: List[(String, Int)]
+  protected val storageIpMapping: List[(String, Int)]
+  protected val graphIpMapping: List[(String, Int)]
+  protected val consoleIp: String
 
-  protected lazy val metaAddrs: String = generateIpAddrs(MetaIpPortMapping)
+  protected lazy val metaAddrs: String = generateIpAddrs(metaIpPortMapping)
 
   protected def generateIpAddrs(ipPortMapping: List[(String, Int)]): String =
     ipPortMapping.map(kv => s"${kv._1}:${kv._2}").mkString(",")
-
-  private val networkType = "bridge"
 
   private lazy val ryukContainerId: String = {
     val containersResponse = Nebula.TestcontainersRyukContainer
     containersResponse.map(_.getId).orNull
   }
 
-  private lazy val testcontainersContainerIp: String = {
-    val testcontainersContainerId = ryukContainerId
-
-    if (testcontainersContainerId == null) {
-      throw new IllegalStateException(s"ContainerId of the ${Nebula.Ryuk} cannot be null!")
+  protected def increaseIpBasedOnGateway(num: Int): String = {
+    if (gateway == null) {
+      throw new IllegalStateException("Gateway IPAddress cannot be null!")
     }
-
-    val inspectContainerResponse = await()
-      .atMost(Nebula.ContainerAtMost)
-      .pollInterval(Nebula.PollInterval)
-      .pollInSameThread()
-      .until(
-        new Callable[InspectContainerResponse] {
-          override def call(): InspectContainerResponse =
-            Nebula.dockerClient.inspectContainerCmd(testcontainersContainerId).exec()
-        },
-        (t: InspectContainerResponse) =>
-          t.getNetworkSettings.getNetworks.asScala
-            .get(networkType)
-            .map(_.getIpAddress)
-            .isDefined
-      )
-    inspectContainerResponse.getNetworkSettings.getNetworks.asScala
-      .get(networkType)
-      .map(_.getIpAddress)
-      .orNull
-  }
-
-  protected def increaseIpBasedOnRyukIp(num: Int): String = {
-    if (testcontainersContainerIp == null) {
-      throw new IllegalStateException("IPAddress cannot be null!")
-    }
-    val ipSplits = testcontainersContainerIp.split("\\.").toList
+    val ipSplits = gateway.split("\\.").toList
     val last     = ipSplits.last.toInt
     ipSplits.updated(ipSplits.size - 1, last + num).mkString(".")
   }
@@ -209,6 +180,9 @@ abstract class NebulaClusterContainer extends Startable {
       val res = Future.sequence(allContainers.map(f => Future(f)).map(_.map(_.stop())))
       Await.result(res, Nebula.StopTimeout.seconds)
       stopIfExistsRyukContainer()
+      if (nebulaNet.getId != null) {
+        Nebula.removeTestcontainersNetwork(nebulaNet.getId)
+      }
     } catch {
       case e: Throwable =>
         logger.error("Stopped all containers failed", e)
