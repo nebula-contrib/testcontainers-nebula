@@ -35,7 +35,6 @@ abstract class BaseContainer[T <: GenericContainer[T]](dockerImageName: DockerIm
       cmd
         .withName(getContainerName)
         .getHostConfig
-        .withExtraHosts()
         .withPortBindings(portsBindings: _*)
         .withAutoRemove(true)
     )
