@@ -24,7 +24,7 @@ object NebulaSimpleClusterContainer {
  * @param absoluteHostPathPrefix
  *   The prefix of your host path, eg: prefix/data/meta1:/data/meta, prefix/logs/meta1:/logs
  */
-final class NebulaSimpleClusterContainer(
+class NebulaSimpleClusterContainer(
   version: String = Nebula.DefaultTag,
   absoluteHostPathPrefix: Option[String] = None
 ) extends NebulaClusterContainer {
