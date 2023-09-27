@@ -16,6 +16,7 @@ import org.testcontainers.shaded.com.google.common.base.Throwables
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 import com.github.dockerjava.api.exception.NotFoundException
+import com.github.dockerjava.api.model.Network.Ipam
 
 import testcontainers.containers.Nebula.dockerClient
 
@@ -26,15 +27,38 @@ import testcontainers.containers.Nebula.dockerClient
  */
 object NebulaClusterContainer {
   private val logger = LoggerFactory.getLogger(classOf[NebulaClusterContainer])
-
 }
 
 abstract class NebulaClusterContainer extends Startable {
 
   import NebulaClusterContainer.logger
 
-  protected val gateway: String
-  protected val nebulaNet: Network
+  protected def subnetIp: String
+
+  protected def gatewayIp: String = {
+    if (subnetIp == null) {
+      throw new IllegalStateException("subnetIp cannot be null")
+    }
+    if (!subnetIp.contains("/")) {
+      throw new IllegalStateException("subnetIp is invalid")
+    }
+    val sub = subnetIp.split("/")(0)
+    increaseLastIp(sub, 1)
+  }
+
+  protected val nebulaNet: Network =
+    Network
+      .builder()
+      .createNetworkCmdModifier { cmd =>
+        cmd
+          .withName(Nebula.NetworkName)
+          .withIpam(
+            new Ipam()
+              .withDriver(Nebula.NetworkType)
+              .withConfig(new Ipam.Config().withSubnet(subnetIp).withGateway(gatewayIp))
+          )
+      }
+      .build()
   protected val metaIpPortMapping: List[(String, Int)]
   protected val storageIpMapping: List[(String, Int)]
   protected val graphIpMapping: List[(String, Int)]
@@ -50,11 +74,11 @@ abstract class NebulaClusterContainer extends Startable {
     containersResponse.map(_.getId).orNull
   }
 
-  protected def increaseIpBasedOnGateway(num: Int): String = {
-    if (gateway == null) {
-      throw new IllegalStateException("Gateway IPAddress cannot be null!")
+  protected def increaseLastIp(ip: String, num: Int): String = {
+    if (ip == null) {
+      throw new IllegalStateException("IPAddress cannot be null!")
     }
-    val ipSplits = gateway.split("\\.").toList
+    val ipSplits = ip.split("\\.").toList
     val last     = ipSplits.last.toInt
     ipSplits.updated(ipSplits.size - 1, last + num).mkString(".")
   }

@@ -34,34 +34,21 @@ class NebulaSimpleClusterContainer(
   def this(version: String, absoluteBindingPath: java.util.Optional[String]) =
     this(version, absoluteBindingPath.toScala)
 
-  override protected val gateway = "172.28.0.1"
-
-  override protected val nebulaNet: Network = Network
-    .builder()
-    .createNetworkCmdModifier { cmd =>
-      cmd
-        .withName(Nebula.NetworkName)
-        .withIpam(
-          new Ipam()
-            .withDriver(Nebula.NetworkType)
-            .withConfig(new Ipam.Config().withSubnet("172.28.0.0/16").withGateway(gateway))
-        )
-    }
-    .build()
+  override protected val subnetIp = "172.28.0.0/16"
 
   protected override val metaIpPortMapping: List[(String, Int)] = List(
-    increaseIpBasedOnGateway(1) -> Nebula.MetadExposedPort
+    increaseLastIp(gatewayIp, 1) -> Nebula.MetadExposedPort
   )
 
   // Does the IP have to be self-incrementing?
   protected override val storageIpMapping: List[(String, Int)] = List(
-    increaseIpBasedOnGateway(2) -> Nebula.StoragedExposedPort
+    increaseLastIp(gatewayIp, 2) -> Nebula.StoragedExposedPort
   )
 
   protected override val graphIpMapping: List[(String, Int)] = List(
-    increaseIpBasedOnGateway(3) -> Nebula.GraphdExposedPort
+    increaseLastIp(gatewayIp, 3) -> Nebula.GraphdExposedPort
   )
-  protected override val consoleIp: String                   = increaseIpBasedOnGateway(4)
+  protected override val consoleIp: String                   = increaseLastIp(gatewayIp, 4)
 
   logger.info(s"Nebula meta nodes started at ip: ${generateIpAddrs(metaIpPortMapping)}")
   logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(storageIpMapping)}")
