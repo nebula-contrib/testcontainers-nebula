@@ -12,7 +12,6 @@ import org.testcontainers.utility.DockerImageName
  */
 final class NebulaConsoleContainer(
   dockerImageName: DockerImageName,
-  containerIp: String,
   graphdIp: String,
   graphdPort: Int,
   storagedAddrs: List[(String, Int)]
@@ -20,14 +19,12 @@ final class NebulaConsoleContainer(
 
   def this(
     version: String,
-    containerIp: String,
     graphdIp: String,
     graphdPort: Int,
     storagedAddrs: List[(String, Int)]
   ) =
     this(
       Nebula.DefaultConsoleImageName.withTag(version),
-      containerIp,
       graphdIp,
       graphdPort,
       storagedAddrs

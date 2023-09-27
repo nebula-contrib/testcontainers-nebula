@@ -3,9 +3,7 @@ package testcontainers.containers
 import scala.jdk.OptionConverters._
 
 import org.slf4j.{ Logger, LoggerFactory }
-import org.testcontainers.containers.{ GenericContainer, Network }
-
-import com.github.dockerjava.api.model.Network.Ipam
+import org.testcontainers.containers.GenericContainer
 
 /**
  * @author
@@ -47,7 +45,6 @@ class NebulaSimpleClusterContainer(
   protected override val graphIpMapping: List[(String, Int)] = List(
     increaseLastIp(gatewayIp, 3) -> Nebula.GraphdExposedPort
   )
-  protected override val consoleIp: String                   = increaseLastIp(gatewayIp, 4)
 
   logger.info(s"Nebula meta nodes started at ip: ${generateIpAddrs(metaIpPortMapping)}")
   logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(storageIpMapping)}")
@@ -87,7 +84,6 @@ class NebulaSimpleClusterContainer(
 
   protected override val console: NebulaConsoleContainer = new NebulaConsoleContainer(
     version,
-    consoleIp,
     graphdIp = graphIpMapping.head._1,
     graphdPort = graphIpMapping.head._2,
     storagedAddrs = storageIpMapping

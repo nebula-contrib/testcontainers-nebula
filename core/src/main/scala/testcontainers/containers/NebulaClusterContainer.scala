@@ -31,7 +31,7 @@ object NebulaClusterContainer {
 
 abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
 
-  import NebulaClusterContainer.logger
+  import NebulaClusterContainer._
 
   protected def gatewayIp: String = {
     if (subnetIp == null) {
@@ -60,7 +60,6 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
   protected val metaIpPortMapping: List[(String, Int)]
   protected val storageIpMapping: List[(String, Int)]
   protected val graphIpMapping: List[(String, Int)]
-  protected val consoleIp: String
 
   protected lazy val metaAddrs: String = generateIpAddrs(metaIpPortMapping)
 
