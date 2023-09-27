@@ -26,15 +26,14 @@ object NebulaSimpleClusterContainer {
  */
 class NebulaSimpleClusterContainer(
   version: String = Nebula.DefaultTag,
-  absoluteHostPathPrefix: Option[String] = None
-) extends NebulaClusterContainer {
+  absoluteHostPathPrefix: Option[String] = None,
+  subnetIp: String = "172.28.0.0/16"
+) extends NebulaClusterContainer(subnetIp) {
 
   import NebulaSimpleClusterContainer._
 
   def this(version: String, absoluteBindingPath: java.util.Optional[String]) =
     this(version, absoluteBindingPath.toScala)
-
-  override protected val subnetIp = "172.28.0.0/16"
 
   protected override val metaIpPortMapping: List[(String, Int)] = List(
     increaseLastIp(gatewayIp, 1) -> Nebula.MetadExposedPort

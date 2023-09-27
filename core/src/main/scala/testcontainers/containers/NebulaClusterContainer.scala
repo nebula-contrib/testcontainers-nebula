@@ -29,11 +29,9 @@ object NebulaClusterContainer {
   private val logger = LoggerFactory.getLogger(classOf[NebulaClusterContainer])
 }
 
-abstract class NebulaClusterContainer extends Startable {
+abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
 
   import NebulaClusterContainer.logger
-
-  protected def subnetIp: String
 
   protected def gatewayIp: String = {
     if (subnetIp == null) {
