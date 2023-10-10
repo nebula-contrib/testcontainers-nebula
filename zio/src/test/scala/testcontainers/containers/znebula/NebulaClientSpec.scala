@@ -1,6 +1,6 @@
 package testcontainers.containers.znebula
 
-import zio.ZIO
+import zio.{ Scope, ZIO }
 import zio.nebula._
 import zio.nebula.meta._
 import zio.nebula.storage._
@@ -35,18 +35,33 @@ object NebulaClientSpec extends NebulaSpec {
       |MATCH (p:person) RETURN p LIMIT 4;
       |""".stripMargin
 
+  lazy val session = ZioNebulaEnvironment.defaultSession(container.graphdHostList.head, container.graphdPortList.head)
+
   def specLayered: Spec[Nebula, Throwable] =
     suite("nebula suite")(
       suite("nebula session pool")(
         test("create and query") {
           for {
-            init <- ZIO.serviceWithZIO[NebulaSessionClient](_.init())
-            _    <- ZIO.logInfo(s"init session: $init")
-            res1 <- ZIO.serviceWithZIO[NebulaSessionClient](_.execute(insertVertexes))
+            res1 <- ZIO
+                      .serviceWithZIO[NebulaSessionClient](_.execute(insertVertexes))
+                      .provide(
+                        Scope.default,
+                        session
+                      )
             _    <- ZIO.logInfo(s"exec insert vertex: ${res1.errorMessage}")
-            res2 <- ZIO.serviceWithZIO[NebulaSessionClient](_.execute(insertEdges))
+            res2 <- ZIO
+                      .serviceWithZIO[NebulaSessionClient](_.execute(insertEdges))
+                      .provide(
+                        Scope.default,
+                        session
+                      )
             _    <- ZIO.logInfo(s"exec insert edge: ${res2.errorMessage}")
-            res3 <- ZIO.serviceWithZIO[NebulaSessionClient](_.execute(query))
+            res3 <- ZIO
+                      .serviceWithZIO[NebulaSessionClient](_.execute(query))
+                      .provide(
+                        Scope.default,
+                        session
+                      )
             _    <- ZIO.logInfo(s"exec query ${res3.errorMessage}")
           } yield assertTrue(res3.rows.size == 4)
         }

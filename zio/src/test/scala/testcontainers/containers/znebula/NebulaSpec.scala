@@ -11,7 +11,7 @@ import testcontainers.containers.znebula.ext._
 
 trait NebulaSpec extends ZIOSpecDefault {
 
-  type Nebula = Client with SessionClient with Storage with Meta with Scope
+  type Nebula = Client with Storage with Meta with Scope
 
   zio.nebula.GlobalSettings.printStatement = true
   zio.nebula.GlobalSettings.logLevel = LogLevel.Warning
@@ -25,10 +25,9 @@ trait NebulaSpec extends ZIOSpecDefault {
   println(container.metadUrlList)
   println(container.graphdUrlList)
 
-  val meta          = ZioNebulaEnvironment.defaultMeta(container.metadHostList.head, container.metadPortList.head)
-  val client        = ZioNebulaEnvironment.defaultClient(container.graphdHostList.head, container.graphdPortList.head)
-  val sessionClient = ZioNebulaEnvironment.defaultSession(container.graphdHostList.head, container.graphdPortList.head)
-  val storage       = ZioNebulaEnvironment.defaultStorage(container.metadHostList.head, container.metadPortList.head)
+  val meta    = ZioNebulaEnvironment.defaultMeta(container.metadHostList.head, container.metadPortList.head)
+  val client  = ZioNebulaEnvironment.defaultClient(container.graphdHostList.head, container.graphdPortList.head)
+  val storage = ZioNebulaEnvironment.defaultStorage(container.metadHostList.head, container.metadPortList.head)
 
   override def spec =
     (specLayered @@ beforeAll(
@@ -50,7 +49,6 @@ trait NebulaSpec extends ZIOSpecDefault {
         Scope.default,
         meta,
         client,
-        sessionClient,
         storage
       )
 

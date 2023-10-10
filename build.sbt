@@ -5,8 +5,8 @@ val scala2_12Version             = "2.12.18"
 val testcontainersVersion        = "1.19.0"
 val scalaCollectionCompatVersion = "2.11.0"
 val logbackVersion               = "1.4.2"
-val nebulaJavaClientVersion      = "3.6.0"
-val zioNebulaVersion             = "0.1.0"
+val nebulaJavaClientVersion      = "3.6.1"
+val zioNebulaVersion             = "0.1.1"
 
 val supportCrossVersionList = Seq(scala3_Version, scala2_13Version, scala2_12Version)
 
