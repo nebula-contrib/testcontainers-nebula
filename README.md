@@ -21,7 +21,7 @@ Support Java 8+, Scala 3, Scala 2.13 and Scala 2.12
 
 **sbt**:
 ```scala
-"io.github.jxnu-liguobin" %% "testcontainers-nebula" % 'latest version'
+"io.github.jxnu-liguobin" %% "testcontainers-nebula" % 'latest version' % Test
 ```
 
 **maven**:
