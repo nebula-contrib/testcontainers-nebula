@@ -167,7 +167,7 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
     }
 
     if (running) try {
-      logger.trace("Stopping container: ${ryukContainerId}")
+      logger.trace(s"Stopping container: $ryukContainerId")
       dockerClient.killContainerCmd(ryukContainerId).exec
       logger.trace(s"Stopped container: ${Nebula.Ryuk.stripPrefix("/")}")
     } catch {
