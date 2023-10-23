@@ -35,6 +35,7 @@ object NebulaClientSpec extends NebulaSpec {
       |MATCH (p:person) RETURN p LIMIT 4;
       |""".stripMargin
 
+  // nebula-java session client will connect to Nebula during creation, so we need to create a session layer here
   lazy val session = ZioNebulaEnvironment.defaultSession(container.graphdHostList.head, container.graphdPortList.head)
 
   def specLayered: Spec[Nebula, Throwable] =

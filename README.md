@@ -19,7 +19,7 @@ Testcontainers for NebulaGraph
 [NebulaGraph](https://github.com/vesoft-inc/nebula) is a popular open-source graph database that can handle large volumes of data with milliseconds of latency, scale up quickly, and have the ability to perform fast graph analytics. NebulaGraph has been widely used for social media, recommendation systems, knowledge graphs, security, capital flows, AI, etc.
 
 
-## Dependency
+## Introduction
 
 Support Java 8+, Scala 3, Scala 2.13 and Scala 2.12
 
