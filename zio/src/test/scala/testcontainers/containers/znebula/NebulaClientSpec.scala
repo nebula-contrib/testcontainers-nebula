@@ -36,7 +36,7 @@ object NebulaClientSpec extends NebulaSpec {
       |""".stripMargin
 
   // nebula-java session client will connect to Nebula during creation, so we need to create a session layer here
-  lazy val session = ZioNebulaEnvironment.defaultSession(container.graphdHostList.head, container.graphdPortList.head)
+  lazy val session = NebulaTestEnvironment.defaultSession(container.graphdHostList.head, container.graphdPortList.head)
 
   def specLayered: Spec[Nebula, Throwable] =
     suite("nebula suite")(
@@ -70,9 +70,9 @@ object NebulaClientSpec extends NebulaSpec {
       suite("nebula meta manager")(
         test("query") {
           for {
-            spaceItem <- ZIO.serviceWithZIO[NebulaMetaClient](_.space(ZioNebulaEnvironment.defaultSpace))
+            spaceItem <- ZIO.serviceWithZIO[NebulaMetaClient](_.space(NebulaTestEnvironment.defaultSpace))
             _         <- ZIO.logInfo(s"get space: ${spaceItem.toString}")
-            spaceId   <- ZIO.serviceWithZIO[NebulaMetaClient](_.spaceId(ZioNebulaEnvironment.defaultSpace))
+            spaceId   <- ZIO.serviceWithZIO[NebulaMetaClient](_.spaceId(NebulaTestEnvironment.defaultSpace))
             _         <- ZIO.logInfo(s"get space id: ${spaceId.toString}")
           } yield assertTrue(spaceItem != null && spaceId > 0)
         }
@@ -83,7 +83,7 @@ object NebulaClientSpec extends NebulaSpec {
             status     <- ZIO.serviceWithZIO[NebulaStorageClient](_.connect())
             _          <- ZIO.logInfo(s"connect status: ${status.toString}")
             scanResult <- ZIO.serviceWithZIO[NebulaStorageClient](
-                            _.scan(ScanEdge(ZioNebulaEnvironment.defaultSpace, None, "like", None))
+                            _.scan(ScanEdge(NebulaTestEnvironment.defaultSpace, None, "like", None))
                           )
             _          <- ZIO.logInfo(s"scan result: $scanResult")
           } yield assertTrue(scanResult.hasNext)

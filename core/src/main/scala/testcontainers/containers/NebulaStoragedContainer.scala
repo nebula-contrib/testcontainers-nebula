@@ -22,7 +22,7 @@ object NebulaStoragedContainer {
       )
     )
 
-  def defaultVolumeBindings(absoluteHostPathPrefix: String, instanceIndex: Int = 1): List[NebulaVolume] =
+  def defaultVolumeBindings(absoluteHostPathPrefix: String, instanceIndex: Int): List[NebulaVolume] =
     List(
       NebulaVolume(
         absoluteHostPathPrefix + Nebula.DataStoragedPath + instanceIndex,
@@ -52,7 +52,7 @@ final class NebulaStoragedContainer(
     metaAddrs: String,
     portsBindings: List[PortBinding],
     bindings: List[NebulaVolume],
-    instanceIndex: Int = 1
+    instanceIndex: Int
   ) =
     this(
       Nebula.DefaultStoragedImageName.withTag(version),
@@ -69,7 +69,7 @@ final class NebulaStoragedContainer(
     Seq(
       s"--meta_server_addrs=$metaAddrs",
       s"--local_ip=$containerIp",
-      s"--port=$StoragedExposedPort",
+      s"--port=${portsBindings.headOption.flatMap(_.getBinding.getHostPortSpec.split(":").headOption).getOrElse(Nebula.StoragedExposedPort)}",
       s"--log_dir=$StoragedLogPath",
       s"--v=$LOGLevel",
       s"--minloglevel=$MinLogLevel"

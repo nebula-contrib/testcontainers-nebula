@@ -26,50 +26,9 @@ import testcontainers.containers.Nebula.dockerClient
  * @version 1.0,2023/9/18
  */
 object NebulaClusterContainer {
-  private val logger = LoggerFactory.getLogger(classOf[NebulaClusterContainer])
-}
-
-abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
-
-  import NebulaClusterContainer._
-
-  protected def gatewayIp: String = {
-    if (subnetIp == null) {
-      throw new IllegalStateException("subnetIp cannot be null")
-    }
-    if (!subnetIp.contains("/")) {
-      throw new IllegalStateException("subnetIp is invalid")
-    }
-    val sub = subnetIp.split("/")(0)
-    increaseLastIp(sub, 1)
-  }
-
-  protected val nebulaNet: Network =
-    Network
-      .builder()
-      .createNetworkCmdModifier { cmd =>
-        cmd
-          .withName(Nebula.NetworkName)
-          .withIpam(
-            new Ipam()
-              .withDriver(Nebula.NetworkType)
-              .withConfig(new Ipam.Config().withSubnet(subnetIp).withGateway(gatewayIp))
-          )
-      }
-      .build()
-  protected val metaIpPortMapping: List[(String, Int)]
-  protected val storageIpMapping: List[(String, Int)]
-  protected val graphIpMapping: List[(String, Int)]
-
-  protected lazy val metaAddrs: String = generateIpAddrs(metaIpPortMapping)
 
   protected def generateIpAddrs(ipPortMapping: List[(String, Int)]): String =
     ipPortMapping.map(kv => s"${kv._1}:${kv._2}").mkString(",")
-
-  private lazy val ryukContainerId: String = {
-    val containersResponse = Nebula.TestcontainersRyukContainer
-    containersResponse.map(_.getId).orNull
-  }
 
   protected def increaseLastIp(ip: String, num: Int): String = {
     if (ip == null) {
@@ -80,15 +39,123 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
     ipSplits.updated(ipSplits.size - 1, last + num).mkString(".")
   }
 
-  protected val metads: List[GenericContainer[_]]
+  protected def gatewayIp(subnetIp: String): String = {
+    if (subnetIp == null) {
+      throw new IllegalStateException("subnetIp cannot be null")
+    }
+    if (!subnetIp.contains("/")) {
+      throw new IllegalStateException("subnetIp is invalid")
+    }
+    val sub = subnetIp.split("/")(0)
+    increaseLastIp(sub, 1)
+  }
 
-  protected val storageds: List[GenericContainer[_]]
+  private def getClusterPortList(cluster: Int, port: Int): Seq[Int] =
+    0 until cluster map { i =>
+      port + i
+    }
 
-  protected val graphds: List[GenericContainer[_]]
+  private def getClusterIpList(cluster: Int, subnetIp: String, offset: Int): Seq[String] =
+    1 to cluster map { i =>
+      increaseLastIp(gatewayIp(subnetIp), i + offset)
+    }
 
-  protected val console: NebulaConsoleContainer
+  private val logger = LoggerFactory.getLogger(classOf[NebulaClusterContainer])
+}
 
-  def existsRunningContainer: Boolean
+abstract class NebulaClusterContainer(
+  cluster: Int,
+  version: String,
+  absoluteHostPathPrefix: Option[String],
+  subnetIp: String
+) extends Startable {
+
+  import NebulaClusterContainer._
+
+  private val nebulaNet: Network =
+    Network
+      .builder()
+      .createNetworkCmdModifier { cmd =>
+        cmd
+          .withName(Nebula.NetworkName)
+          .withIpam(
+            new Ipam()
+              .withDriver(Nebula.NetworkType)
+              .withConfig(new Ipam.Config().withSubnet(subnetIp).withGateway(gatewayIp(subnetIp)))
+          )
+      }
+      .build()
+
+  private val metaIpPortMapping: List[(String, Int)] =
+    getClusterIpList(cluster, subnetIp, 0).zip(getClusterPortList(cluster, Nebula.MetadExposedPort)).toList
+
+  // Does the IP have to be self-incrementing?
+  private val storageIpMapping: List[(String, Int)] =
+    getClusterIpList(cluster, subnetIp, metaIpPortMapping.size)
+      .zip(getClusterPortList(cluster, Nebula.StoragedExposedPort))
+      .toList
+
+  private val graphIpMapping: List[(String, Int)] =
+    getClusterIpList(cluster, subnetIp, storageIpMapping.size + metaIpPortMapping.size)
+      .zip(getClusterPortList(cluster, Nebula.GraphdExposedPort))
+      .toList
+
+  protected lazy val metaAddrs: String = generateIpAddrs(metaIpPortMapping)
+
+  private lazy val ryukContainerId: String = {
+    val containersResponse = Nebula.TestcontainersRyukContainer
+    containersResponse.map(_.getId).orNull
+  }
+
+  logger.info(s"Nebula meta nodes started at ip: ${generateIpAddrs(metaIpPortMapping)}")
+  logger.info(s"Nebula storage nodes started at ip: ${generateIpAddrs(storageIpMapping)}")
+  logger.info(s"Nebula graph nodes started at ip: ${generateIpAddrs(graphIpMapping)}")
+
+  private lazy val metads: List[GenericContainer[_]] =
+    metaIpPortMapping.zipWithIndex.map { case ((ip, port), i) =>
+      new NebulaMetadContainer(
+        version,
+        ip,
+        metaAddrs,
+        NebulaMetadContainer.defaultPortBindings(port),
+        absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaMetadContainer.defaultVolumeBindings(p, i)),
+        i
+      )
+    }.map(_.withNetwork(nebulaNet))
+
+  private lazy val storageds: List[GenericContainer[_]] =
+    storageIpMapping.zipWithIndex.map { case ((ip, port), i) =>
+      new NebulaStoragedContainer(
+        version,
+        ip,
+        metaAddrs,
+        NebulaStoragedContainer.defaultPortBindings(port),
+        absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaStoragedContainer.defaultVolumeBindings(p, i)),
+        i
+      )
+    }.map(_.dependsOn(metads: _*)).map(_.withNetwork(nebulaNet))
+
+  private lazy val graphds: List[GenericContainer[_]] =
+    graphIpMapping.zipWithIndex.map { case ((ip, port), i) =>
+      new NebulaGraphdContainer(
+        version,
+        ip,
+        metaAddrs,
+        NebulaGraphdContainer.defaultPortBindings(port),
+        absoluteHostPathPrefix.fold(List.empty[NebulaVolume])(p => NebulaGraphdContainer.defaultVolumeBindings(p, i)),
+        i
+      )
+    }.map(_.dependsOn(metads: _*)).map(_.withNetwork(nebulaNet))
+
+  private lazy val console: NebulaConsoleContainer = new NebulaConsoleContainer(
+    version,
+    graphdIp = graphIpMapping.head._1,
+    graphdPort = graphIpMapping.head._2,
+    storagedAddrs = storageIpMapping
+  ).withNetwork(nebulaNet)
+
+  def existsRunningContainer: Boolean =
+    metads.exists(_.isRunning) || storageds.exists(_.isRunning) || graphds.exists(_.isRunning) || console.isRunning
 
   private def awaitMappedPort[S <: GenericContainer[S]](container: GenericContainer[S], exposedPort: Int): Int = {
     val containerId = await()
@@ -112,6 +179,18 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
   }
 
   final override def start(): Unit = {
+    metads.foreach { md =>
+      md.start()
+      Unreliables.retryUntilTrue(
+        Nebula.StartTimeout.getSeconds.toInt,
+        TimeUnit.SECONDS,
+        () => {
+          val g = md.execInContainer("ps", "-ef").getStdout
+          g != null && g.contains(Nebula.MetadName)
+        }
+      )
+    }
+
     storageds.foreach { sd =>
       sd.start()
       Unreliables.retryUntilTrue(
@@ -142,6 +221,7 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
       () => {
         // we are waiting to try the storage service online
         val g = console.execInContainer(console.showHostsCommand: _*).getStdout
+        logger.debug(g)
         g != null && g.contains("ONLINE") && !g.contains("OFFLINE")
       }
     )
@@ -157,22 +237,22 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
       running = containerInfo.getState != null && true == containerInfo.getState.getRunning
     } catch {
       case e: NotFoundException =>
-        logger.trace(s"Was going to stop container but it apparently no longer exists: ${ryukContainerId}")
+        logger.debug(s"Was going to stop container but it apparently no longer exists: $ryukContainerId")
         return
       case e: Exception =>
-        logger.trace(
+        logger.debug(
           s"Error encountered when checking container for shutdown (ID: $ryukContainerId) - it may not have been stopped, or may already be stopped. Root cause: ${Throwables.getRootCause(e).getMessage}"
         )
         return
     }
 
     if (running) try {
-      logger.trace(s"Stopping container: $ryukContainerId")
+      logger.debug(s"Stopping container: $ryukContainerId")
       dockerClient.killContainerCmd(ryukContainerId).exec
-      logger.trace(s"Stopped container: ${Nebula.Ryuk.stripPrefix("/")}")
+      logger.debug(s"Stopped container: ${Nebula.Ryuk.stripPrefix("/")}")
     } catch {
       case e: Exception =>
-        logger.trace(
+        logger.debug(
           s"Error encountered shutting down container (ID: $ryukContainerId) - it may not have been stopped, or may already be stopped. Root cause: ${Throwables.getRootCause(e).getMessage}"
         )
     }
@@ -180,17 +260,17 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
     try dockerClient.inspectContainerCmd(ryukContainerId).exec
     catch {
       case e: Exception =>
-        logger.trace(s"Was going to remove container but it apparently no longer exists: $ryukContainerId")
+        logger.debug(s"Was going to remove container but it apparently no longer exists: $ryukContainerId")
         return
     }
 
     try {
-      logger.trace(s"Removing container: $ryukContainerId")
+      logger.debug(s"Removing container: $ryukContainerId")
       dockerClient.removeContainerCmd(ryukContainerId).withRemoveVolumes(true).withForce(true).exec
       logger.debug(s"Removed container and associated volume(s): ${Nebula.Ryuk.stripPrefix("/")}")
     } catch {
       case e: Exception =>
-        logger.trace(
+        logger.debug(
           s"Error encountered shutting down container (ID: $ryukContainerId) - it may not have been stopped, or may already be stopped. Root cause: ${Throwables.getRootCause(e).getMessage}"
         )
     }
@@ -206,7 +286,7 @@ abstract class NebulaClusterContainer(subnetIp: String) extends Startable {
       }
     } catch {
       case e: Throwable =>
-        logger.error("Stopped all containers failed", e)
+        logger.warn(s"Stopped all containers failed: ${e.getMessage}")
     }
 
   final def allContainers: List[GenericContainer[_]] = metads ++ storageds ++ graphds ++ List(console)
