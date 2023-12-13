@@ -21,7 +21,7 @@ Support Java 8+, Scala 3, Scala 2.13 and Scala 2.12
 
 **sbt**:
 ```scala
-"io.github.jxnu-liguobin" %% "testcontainers-nebula" % 'latest version' % Test
+"io.github.jxnu-liguobin" %% "testcontainers-nebula" % "latest version" % Test
 ```
 
 **maven**:
@@ -62,7 +62,7 @@ ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/znebula
 
 The zio module provides default configurations for better integration with zio-nebula, just adding dependency:
 ```scala
-"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % 'latest version'
+"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % "latest version"
 // testcontainers-nebula-zio depends on zio-nebula dependency 
-"io.github.jxnu-liguobin" %% "zio-nebula" % 'latest version'
+"io.github.jxnu-liguobin" %% "zio-nebula" % "latest version"
 ```
