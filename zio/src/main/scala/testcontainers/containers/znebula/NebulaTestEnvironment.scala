@@ -13,7 +13,7 @@ import zio.nebula.storage.NebulaStorageClient
  *   梦境迷离
  * @version 1.0,2023/9/19
  */
-object ZioNebulaEnvironment {
+object NebulaTestEnvironment {
 
   var defaultUser  = "root"
   var defaultPwd   = "nebula"

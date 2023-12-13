@@ -23,7 +23,7 @@ object NebulaGraphdContainer {
       )
     )
 
-  def defaultVolumeBindings(absoluteHostPathPrefix: String, instanceIndex: Int = 1): List[NebulaVolume] =
+  def defaultVolumeBindings(absoluteHostPathPrefix: String, instanceIndex: Int): List[NebulaVolume] =
     List(
       NebulaVolume(
         absoluteHostPathPrefix + Nebula.GraphdLogPath + instanceIndex,
@@ -48,7 +48,7 @@ final class NebulaGraphdContainer(
     metaAddrs: String,
     portsBindings: List[PortBinding],
     bindings: List[NebulaVolume],
-    instanceIndex: Int = 1
+    instanceIndex: Int
   ) =
     this(Nebula.DefaultGraphdImageName.withTag(version), containerIp, metaAddrs, portsBindings, bindings, instanceIndex)
 
@@ -57,7 +57,7 @@ final class NebulaGraphdContainer(
   override def commands(containerIp: String, metaAddrs: String): Seq[String] =
     Seq(
       s"--meta_server_addrs=$metaAddrs",
-      s"--port=$GraphdExposedPort",
+      s"--port=${portsBindings.headOption.flatMap(_.getBinding.getHostPortSpec.split(":").headOption).getOrElse(Nebula.GraphdExposedPort)}",
       s"--local_ip=$containerIp",
       s"--log_dir=$GraphdLogPath",
       s"--v=$LOGLevel",

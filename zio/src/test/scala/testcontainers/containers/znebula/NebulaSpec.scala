@@ -6,7 +6,7 @@ import zio.nebula.net.{ NebulaClient, Stmt }
 import zio.test._
 import zio.test.TestAspect._
 
-import testcontainers.containers.NebulaSimpleClusterContainer
+import testcontainers.containers.ArbitraryNebulaCluster
 import testcontainers.containers.znebula.ext._
 
 trait NebulaSpec extends ZIOSpecDefault {
@@ -19,15 +19,15 @@ trait NebulaSpec extends ZIOSpecDefault {
   override def aspects: Chunk[TestAspectAtLeastR[TestEnvironment]] =
     Chunk(TestAspect.fibers, TestAspect.timeout(180.seconds))
 
-  val container: NebulaSimpleClusterContainer = new NebulaSimpleClusterContainer
+  val container: ArbitraryNebulaCluster = new ArbitraryNebulaCluster
   container.start()
 
   println(container.metadUrlList)
   println(container.graphdUrlList)
 
-  val meta    = ZioNebulaEnvironment.defaultMeta(container.metadHostList.head, container.metadPortList.head)
-  val client  = ZioNebulaEnvironment.defaultClient(container.graphdHostList.head, container.graphdPortList.head)
-  val storage = ZioNebulaEnvironment.defaultStorage(container.metadHostList.head, container.metadPortList.head)
+  val meta    = NebulaTestEnvironment.defaultMeta(container.metadHostList.head, container.metadPortList.head)
+  val client  = NebulaTestEnvironment.defaultClient(container.graphdHostList.head, container.graphdPortList.head)
+  val storage = NebulaTestEnvironment.defaultStorage(container.metadHostList.head, container.metadPortList.head)
 
   override def spec =
     (specLayered @@ beforeAll(
@@ -36,8 +36,8 @@ trait NebulaSpec extends ZIOSpecDefault {
           _.openSession().flatMap(
             _.execute(
               Stmt.str(s"""
-                          |CREATE SPACE IF NOT EXISTS ${ZioNebulaEnvironment.defaultSpace}(vid_type=fixed_string(20));
-                          |USE ${ZioNebulaEnvironment.defaultSpace};
+                          |CREATE SPACE IF NOT EXISTS ${NebulaTestEnvironment.defaultSpace}(vid_type=fixed_string(20));
+                          |USE ${NebulaTestEnvironment.defaultSpace};
                           |CREATE TAG IF NOT EXISTS person(name string, age int);
                           |CREATE EDGE IF NOT EXISTS like(likeness double)
                           |""".stripMargin)

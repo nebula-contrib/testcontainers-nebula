@@ -16,9 +16,9 @@ import java.util.Optional;
  * @author 梦境迷离
  * @version 1.0, 2023/9/20
  */
-public class SimpleNebulaCluster {
+public class ArbitraryNebulaClusterExample {
 
-    private static final Logger log = LoggerFactory.getLogger(SimpleNebulaCluster.class);
+    private static final Logger log = LoggerFactory.getLogger(ArbitraryNebulaClusterExample.class);
 
     public static void main(String[] args) {
         testNebulaContainerCluster();
@@ -27,14 +27,15 @@ public class SimpleNebulaCluster {
 
     public static void testNebulaContainerCluster() {
 
-        try (NebulaClusterContainer cluster = new NebulaSimpleClusterContainer("v3.6.0", Optional.empty())) {
+        try (NebulaClusterContainer cluster = new ArbitraryNebulaCluster(3, "v3.6.0", Optional.of("./"))) {
             cluster.start();
+            System.out.println(cluster.getMetadList().size());
             GenericContainer<?> meta = cluster.getMetadList().get(0);
             GenericContainer<?> storage = cluster.getStoragedList().get(0);
             GenericContainer<?> graph = cluster.getGraphdList().get(0);
 
             useClientToCreateSpaceTag();
-            int instanceIndex = 1;
+            int instanceIndex = 0;
 
             assert (meta.getContainerName().startsWith(Nebula.MetadName() + instanceIndex));
             assert (storage.getContainerName().startsWith(Nebula.StoragedName() + instanceIndex));
@@ -44,9 +45,9 @@ public class SimpleNebulaCluster {
             assert cluster.getMetadPortList().get(0) == Nebula.MetadExposedPort();
             assert cluster.getStoragedPortList().get(0) == Nebula.StoragedExposedPort();
 
-            assert cluster.storagedList().head().getDependencies().size() == 1;
+            assert cluster.storagedList().head().getDependencies().size() == 3;
             assert cluster.metadList().head().getDependencies().isEmpty();
-            assert cluster.graphdList().head().getDependencies().size() == 1;
+            assert cluster.graphdList().head().getDependencies().size() == 3;
 
             if (cluster.existsRunningContainer()) {
                 cluster.stop();

@@ -21,7 +21,7 @@ Support Java 8+, Scala 3, Scala 2.13 and Scala 2.12
 
 **sbt**:
 ```scala
-"io.github.jxnu-liguobin" %% "testcontainers-nebula" % 'latest version' % Test
+"io.github.jxnu-liguobin" %% "testcontainers-nebula" % "latest version" % Test
 ```
 
 **maven**:
@@ -41,20 +41,28 @@ testImplementation group: 'io.github.jxnu-liguobin', name: 'testcontainers-nebul
 
 ## Usage Instructions
 
+Create a cluster with three nodes, this means that 3 metad nodes, 3 storaged nodes, 3 graphd nodes and 1 console will be created:
+```java
+// Logs and data are mounted to the current directory.
+NebulaClusterContainer cluster = new ArbitraryNebulaCluster(3, "v3.6.0", Optional.of("./"));
+cluster.start();
+```
+
+In general, it is only necessary to create a cluster with one node, this means that 1 metad node, 1 storaged node, 1 graphd node and 1 console will be created:
+```java
+// Logs and data are mounted to the current directory.
+NebulaClusterContainer cluster = new ArbitraryNebulaCluster(1, "v3.6.0", Optional.of("./"));
+cluster.start();
+```
+![testcontainers_nebula](testcontainers_nebula.png)
+
 Java example: [SimpleNebulaCluster](./examples/src/main/java/testcontainers/containers/SimpleNebulaCluster.java)
 
 ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/znebula/NebulaSpec.scala)
 
 The zio module provides default configurations for better integration with zio-nebula, just adding dependency:
 ```scala
-"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % 'latest version'
+"io.github.jxnu-liguobin" %% "testcontainers-nebula-zio" % "latest version"
 // testcontainers-nebula-zio depends on zio-nebula dependency 
-"io.github.jxnu-liguobin" %% "zio-nebula" % 'latest version'
+"io.github.jxnu-liguobin" %% "zio-nebula" % "latest version"
 ```
-
-Details:
-
-1. `NebulaSimpleClusterContainer.scala` creates four container instances: graphd,metad,storaged,console.
-2. `NebulaClusterContainer.scala` provides a generic definition, and any number of clusters can be created by implementing its abstraction methods, ports and volumes can be modified.
-
-![testcontainers_nebula](testcontainers_nebula.png)
