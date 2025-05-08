@@ -56,7 +56,7 @@ cluster.start();
 ```
 ![testcontainers_nebula](testcontainers_nebula.png)
 
-Java example: [SimpleNebulaCluster](./examples/src/main/java/testcontainers/containers/SimpleNebulaCluster.java)
+Java example: [SimpleNebulaCluster](./examples/src/main/java/testcontainers/containers/ArbitraryNebulaClusterExample.java)
 
 ZIO example: [NebulaSpec](./zio/src/test/scala/testcontainers/containers/znebula/NebulaSpec.scala)
 
